@@ -1375,3 +1375,19 @@ Optional Features:
          tick();
 
       }
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.setAttribute('draggable', true);
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        // Other drag-related events
+    });
+
+    const piles = document.querySelectorAll('.pile ul');
+    piles.forEach(pile => {
+        pile.addEventListener('dragover', handleDragOver);
+        pile.addEventListener('drop', handleDrop);
+        pile.addEventListener('dragleave', handleDragLeave);
+    });
+});
