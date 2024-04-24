@@ -1393,47 +1393,55 @@ function createCard(card, selector, html, append) {
    }
 }
 
-// Event Listeners for Drag and Drop
 function addDragEventListeners() {
-   var cards = document.querySelectorAll('.card');
-   cards.forEach(function(card) {
-      card.addEventListener('dragstart', handleDragStart, false);
-      card.addEventListener('dragover', handleDragOver, false);
-      card.addEventListener('drop', handleDrop, false);
-      card.addEventListener('dragend', handleDragEnd, false);
-   });
+    var cards = document.querySelectorAll('.card');
+    cards.forEach(function(card) {
+        card.addEventListener('dragstart', handleDragStart, false);
+        card.addEventListener('dragend', handleDragEnd, false);
+    });
 
-   var piles = document.querySelectorAll('.pile');
-   piles.forEach(function(pile) {
-      pile.addEventListener('dragover', handleDragOver, false);
-      pile.addEventListener('drop', handleDrop, false);
-   });
+    var piles = document.querySelectorAll('.pile');
+    piles.forEach(function(pile) {
+        pile.addEventListener('dragover', handleDragOver, false);
+        pile.addEventListener('drop', handleDrop, false);
+    });
 }
 
-// Drag Functions
 function handleDragStart(e) {
-   e.dataTransfer.setData('text/plain', e.target.id);
-   e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', e.target.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.classList.add('dragging'); // Add a dragging class for styling or other indicators
 }
 
 function handleDragOver(e) {
-   e.preventDefault(); // Necessary to allow dropping
-   e.dataTransfer.dropEffect = 'move';
+    e.preventDefault(); // Necessary to allow dropping
+    e.dataTransfer.dropEffect = 'move'; // Optional: visual feedback of move operation
 }
 
 function handleDrop(e) {
-   e.preventDefault();
-   var data = e.dataTransfer.getData('text/plain');
-   var card = document.getElementById(data);
-   if (this !== card && this.className.includes('pile')) {
-      this.appendChild(card);
-      // Optional: add gameplay logic here, e.g., validate move
-   }
+    e.preventDefault();
+    var data = e.dataTransfer.getData('text/plain');
+    var card = document.getElementById(data);
+    if (this !== card && this.className.includes('pile')) {
+        this.appendChild(card);
+        card.classList.remove('dragging'); // Clean up dragging class
+        checkCardFlip(card); // Check if the card needs to be flipped
+        // Optional: add gameplay logic here, e.g., validate move
+    }
 }
 
 function handleDragEnd(e) {
-   // Optional: clean up or revert styles here
+    e.target.classList.remove('dragging'); // Ensure dragging class is cleaned up on drag end
 }
 
-// Initialize Drag and Drop after setting up the table
-document.addEventListener('DOMContentLoaded', addDragEventListeners); // Ensure the DOM is fully loaded before attaching event listeners
+function checkCardFlip(card) {
+    // Example: flip card if it's face down
+    if (card.classList.contains('face-down')) {
+        card.classList.remove('face-down');
+        card.classList.add('face-up');
+        // Optional: further gameplay logic to handle card flip
+    }
+}
+
+document.addEventListener('DOMContentLoaded', addDragEventListeners);
+
