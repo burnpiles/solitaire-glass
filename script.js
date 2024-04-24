@@ -1374,6 +1374,7 @@ Optional Features:
          };
          tick();
 
+
 function handleDragStart(e) {
     e.target.classList.add('dragging');
 }
@@ -1398,3 +1399,17 @@ function handleDrop(e) {
     e.target.appendChild(draggableElement);
     draggableElement.classList.remove('dragging');
 }
+function enableDragEvents() {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.setAttribute('draggable', true);
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        card.addEventListener('dragover', handleDragOver);
+        card.addEventListener('dragleave', handleDragLeave);
+        card.addEventListener('drop', handleDrop);
+    });
+}
+
+// Call this function after the cards are rendered
+enableDragEvents();
