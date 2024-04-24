@@ -1508,3 +1508,23 @@ document.addEventListener('DOMContentLoaded', function() {
     addDragEventListeners(); // Make sure drag event listeners are added
     setupStockClick();       // Setup click handling for the stock pile
 });
+
+
+
+function handleDrop(e) {
+    e.preventDefault();
+    var data = e.dataTransfer.getData('text/plain');
+    var card = document.getElementById(data);
+    if (this !== card && this.classList.contains('pile')) {
+        this.appendChild(card); // Append card to new parent pile
+        card.classList.remove('dragging');
+        
+        // Calculate new top margin based on number of cards in the pile
+        var numberOfCards = this.querySelectorAll('.card').length;
+        card.style.top = `${numberOfCards * 20}px`; // Adjust 20px to control overlap
+
+        console.log("Drop successful onto:", this);
+    } else {
+        console.log("Drop failed. Target is not a pile or is the card itself.");
+    }
+}
