@@ -1377,3 +1377,69 @@ Optional Features:
       }
 
 
+
+function createCard(card, selector, html, append) {
+    var e = document.createElement('li');
+    e.className = 'card';
+    e.id = 'card-' + card[0] + '-' + card[1]; // Example id format: "card-AH" for Ace of Hearts
+    e.dataset.rank = card[0];
+    e.dataset.suit = card[1];
+    e.draggable = true;
+    e.innerHTML = html;
+    var pile = document.querySelector(selector);
+    if (append) {
+        pile.appendChild(e);
+    } else {
+        pile.insertBefore(e, pile.firstChild);
+    }
+
+    // Add event listeners for drag and drop
+    e.addEventListener('dragstart', handleDragStart);
+    e.addEventListener('dragover', handleDragOver);
+    e.addEventListener('dragleave', handleDragLeave);
+    e.addEventListener('drop', handleDrop);
+}
+
+function handleDragStart(event) {
+    // Your code for handling drag start
+}
+
+function handleDragOver(event) {
+    // Your code for handling drag over
+    event.preventDefault(); // Necessary for allowing drop
+}
+
+function handleDragLeave(event) {
+    // Your code for handling drag leave
+}
+
+function handleDrop(event) {
+    // Your code for handling drop
+    event.preventDefault();
+    var cardID = event.dataTransfer.getData('text');
+    var cardElement = document.getElementById(cardID);
+    var sourcePile = cardElement.dataset.pile;
+    var destinationPile = this.dataset.pile;
+
+    // Extract rank and suit from card ID
+    var cardDetails = cardID.split('-'); // cardID example: "card-AH"
+    var card = [cardDetails[1], cardDetails[2]];
+
+    // Check if move is valid
+    if (validateMove(card, destinationPile)) {
+        // Make move
+        makeMove(sourcePile, destinationPile, cardElement);
+        // Possible functions to call after move
+        reset(table);
+        render(table, playedCards);
+        play(table);
+    }
+}
+
+// Modify makeMove to accept cardElement and move the element
+function makeMove(sourcePile, destinationPile, cardElement) {
+    // Move card element to new pile
+    // Additional logic for updating the game state
+}
+
+
