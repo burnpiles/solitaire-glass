@@ -331,8 +331,6 @@ Optional Features:
          return html;
       }
 
-
-
    // create card in pile
       function createCard(card, selector, html, append) {
          var r = card[0]; // get rank
@@ -360,13 +358,6 @@ Optional Features:
          else pile.insertBefore(e, pile.firstChild);
          return;
       }
-
-
-
-
-
-
-
 
    // check for played cards
       function checkForPlayedCards(playedCards) {
@@ -1384,17 +1375,3 @@ Optional Features:
          tick();
 
       }
-
-function allowDrop(ev) {
-    ev.preventDefault(); // Prevent default to allow drop
-}
-
-function drag(ev) {
-    ev.dataTransfer.setData("text", ev.target.id); // Transfer the ID of the draggable element
-}
-
-function drop(ev) {
-    ev.preventDefault();
-    var data = ev.dataTransfer.getData("text");
-    ev.target.appendChild(document.getElementById(data)); // Append the dragged element to the drop zone
-}
