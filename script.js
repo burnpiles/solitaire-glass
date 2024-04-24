@@ -1443,5 +1443,42 @@ function checkCardFlip(card) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', addDragEventListeners);
+document.addEventListener('DOMContentLoaded', function() {
+    addDragEventListeners();
+});
+
+
+function handleDrop(e) {
+    e.preventDefault();
+    var data = e.dataTransfer.getData('text/plain');
+    var card = document.getElementById(data);
+    console.log('Dropped data:', data, 'Card element:', card);
+
+    if (this !== card && this.classList.contains('pile')) {
+        this.appendChild(card);
+        card.classList.remove('dragging');
+        console.log("Drop successful onto:", this);
+    } else {
+        console.log("Drop failed. Target is not a pile or is the card itself.");
+    }
+}
+
+
+function createCard(card, selector, html, append) {
+   var e = document.createElement('li');
+   e.className = 'card';
+   e.id = card[0] + card[1]; // Example id format: "AH" for Ace of Hearts
+   e.dataset.rank = card[0];
+   e.dataset.suit = card[1];
+   e.draggable = true;
+   e.innerHTML = html;
+   var pile = document.querySelector(selector);
+   if (append) {
+       pile.appendChild(e);
+   } else {
+       pile.insertBefore(e, pile.firstChild);
+   }
+}
+
+
 
