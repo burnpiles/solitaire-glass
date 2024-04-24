@@ -1377,6 +1377,7 @@ Optional Features:
       }
 
 
+
 // Modify createCard function to include draggable attribute
 function createCard(card, selector, html, append) {
    var e = document.createElement('li'); // Creating a new card element
@@ -1392,6 +1393,9 @@ function createCard(card, selector, html, append) {
        pile.insertBefore(e, pile.firstChild); // Or insert it at the beginning
    }
 }
+
+
+
 
 function addDragEventListeners() {
     var cards = document.querySelectorAll('.card');
@@ -1522,6 +1526,60 @@ function handleDrop(e) {
         // Calculate new top margin based on number of cards in the pile
         var numberOfCards = this.querySelectorAll('.card').length;
         card.style.top = `${numberOfCards * 20}px`; // Adjust 20px to control overlap
+
+        console.log("Drop successful onto:", this);
+    } else {
+        console.log("Drop failed. Target is not a pile or is the card itself.");
+    }
+}
+
+
+
+function handleDragOver(e) {
+    e.preventDefault(); // Canceling the default action of dragover is necessary to trigger the drop event
+}
+
+
+function handleDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.classList.add('dragging');
+}
+
+
+
+function createCard(card, selector, html, append) {
+    var e = document.createElement('li');
+    e.className = 'card';
+    e.id = card[0] + card[1]; // e.g., 'AH' for Ace of Hearts, ensure this is unique
+    e.dataset.rank = card[0];
+    e.dataset.suit = card[1];
+    e.draggable = true;
+    e.innerHTML = html;
+    var pile = document.querySelector(selector);
+    if (append) {
+        pile.appendChild(e);
+    } else {
+        pile.insertBefore(e, pile.firstChild);
+    }
+}
+
+
+function handleDrop(e) {
+    e.preventDefault();
+    var data = e.dataTransfer.getData('text/plain');
+    var card = document.getElementById(data);
+
+    if (this !== card && this.classList.contains('pile')) {
+        this.appendChild(card);
+        card.classList.remove('dragging');
+
+        // Calculate new top margin based on number of cards in the pile
+        var cardsInPile = this.querySelectorAll('.card');
+        var offset = 30; // Vertical offset for each card, adjust as needed
+        cardsInPile.forEach((card, index) => {
+            card.style.top = `${index * offset}px`;
+        });
 
         console.log("Drop successful onto:", this);
     } else {
