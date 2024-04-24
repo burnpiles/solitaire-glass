@@ -20,7 +20,29 @@
 </head>
 <body>
 <!-- partial:index.partial.html -->
-   <div class="container">
+
+  <!-- Assuming this HTML snippet is part of your index.html -->
+
+<!-- Draggable cards in the tableau -->
+<div id="tab" class="tab">
+    <div class="pile" draggable="true" ondragstart="drag(event)" id="card1">Card 1</div>
+    <div class="pile" draggable="true" ondragstart="drag(event)" id="card2">Card 2</div>
+    <div class="pile" draggable="true" ondragstart="drag(event)" id="card3">Card 3</div>
+</div>
+
+<!-- Drop zones (foundations and tableau) -->
+<div id="foundations">
+    <div class="foundation" ondragover="allowDrop(event)" ondrop="drop(event)" id="foundation1">Foundation 1</div>
+    <div class="foundation" ondragover="allowDrop(event)" ondrop="drop(event)" id="foundation2">Foundation 2</div>
+    <div class="foundation" ondragover="allowDrop(event)" ondrop="drop(event)" id="foundation3">Foundation 3</div>
+    <div class="foundation" ondragover="allowDrop(event)" ondrop="drop(event)" id="foundation4">Foundation 4</div>
+</div>
+
+
+  
+  
+  
+  <div class="container">
 
       <div id="score">
          <div class="timer">
