@@ -427,12 +427,6 @@ function validateDrop(draggedCardData, targetPileName) {
    // It should return true if the move is valid, false otherwise.
 }
 
-        
-        if (validateMove([cardData.rank, cardData.suit], targetPileName)) {
-            move(table[sourcePileName], table[targetPileName], true);
-            reset(table);
-            render(table, playedCards);
-            play(table);
         }
     }
 }
