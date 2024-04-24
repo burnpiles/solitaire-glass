@@ -1374,20 +1374,27 @@ Optional Features:
          };
          tick();
 
-      }
-document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.setAttribute('draggable', true);
-        card.addEventListener('dragstart', handleDragStart);
-        card.addEventListener('dragend', handleDragEnd);
-        // Other drag-related events
-    });
+function handleDragStart(e) {
+    e.target.classList.add('dragging');
+}
 
-    const piles = document.querySelectorAll('.pile ul');
-    piles.forEach(pile => {
-        pile.addEventListener('dragover', handleDragOver);
-        pile.addEventListener('drop', handleDrop);
-        pile.addEventListener('dragleave', handleDragLeave);
-    });
-});
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+}
+
+function handleDragOver(e) {
+    e.preventDefault(); // Necessary to allow the drop
+    e.target.closest('.pile ul').classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.target.closest('.pile ul').classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.target.closest('.pile ul').classList.remove('drag-over');
+    const id = e.dataTransfer.getData('text');
+    const draggableElement = document.getElementById(id);
+    e.target.appendChild(draggableElement);
+    draggableElement.classList.remove('dragging');
+}
