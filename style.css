@@ -758,3 +758,43 @@ body {
    grammarly-card {
        display: none;
    }
+/* Drag-and-Drop Enhancements for Solitaire Game */
+
+.card {
+    cursor: grab; /* Indicates that the card can be grabbed */
+}
+
+.card:active {
+    cursor: grabbing; /* Changes the cursor when the card is being dragged */
+}
+
+.card.dragging {
+    opacity: 0.5; /* Reduces opacity to give a sense of movement */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25); /* Adds shadow for depth perception */
+    z-index: 1000; /* Ensures the dragged card is above all other elements */
+}
+
+.pile ul {
+    min-height: 120px; /* Ensures drop areas are large enough to receive cards, even when empty */
+}
+
+.pile ul.drag-over {
+    border: 2px dashed #fff; /* Highlights the pile border when dragging a card over it */
+    background-color: rgba(255,255,255,0.1); /* Adds a subtle background color change */
+}
+
+@media screen and (max-width: 768px) {
+    .card {
+        font-size: 0.45em; /* Adjusts font size for better visibility on smaller screens */
+    }
+
+    .pile::after, .card {
+        border-radius: 5px; /* Adjusts border radius for smaller screens */
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .card {
+        font-size: 0.35em; /* Further reduces font size for very small screens */
+    }
+}
