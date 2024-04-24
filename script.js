@@ -331,33 +331,126 @@ Optional Features:
          return html;
       }
 
-   // create card in pile
-      function createCard(card, selector, html, append) {
-         var r = card[0]; // get rank
-         var s = card[1]; // get suit
-         // get pile based on selector
-         if ( selector.includes('#stock') ) var p = 'stock';
-         if ( selector.includes('#waste') ) var p = 'waste';
-         if ( selector.includes('#spades') ) var p = 'spades';
-         if ( selector.includes('#hearts') ) var p = 'hearts';
-         if ( selector.includes('#diamonds') ) var p = 'diamonds';
-         if ( selector.includes('#clubs') ) var p = 'clubs';
-         if ( selector.includes('#tab') ) var p = 'tab';
-         var e = d.createElement('li'); // create li element
-         e.className = 'card'; // add .card class to element
-         e.dataset.rank = r; // set rank atribute
-         e.dataset.suit = s; // set suit attribute
-         e.dataset.pile = p; // set pile attribute;
-         e.dataset.selected = 'false'; // set selected attribute
-         e.innerHTML = html; // insert html to element
-         // query for pile
-         var pile = d.querySelector(selector);
-         // append to pile
-         if (append) pile.appendChild(e);
-         // or prepend to pile
-         else pile.insertBefore(e, pile.firstChild);
-         return;
+
+
+
+
+
+
+
+
+
+
+
+
+// create card in pile with drag-and-drop functionality
+function createCard(card, selector, html, append) {
+    var r = card[0]; // get rank
+    var s = card[1]; // get suit
+    // get pile based on selector
+    var p = selector.includes('#stock') ? 'stock' :
+            selector.includes('#waste') ? 'waste' :
+            selector.includes('#spades') ? 'spades' :
+            selector.includes('#hearts') ? 'hearts' :
+            selector.includes('#diamonds') ? 'diamonds' :
+            selector.includes('#clubs') ? 'clubs' :
+            selector.includes('#tab') ? 'tab' : '';
+    var e = document.createElement('li'); // create li element
+    e.className = 'card'; // add .card class to element
+    e.dataset.rank = r; // set rank attribute
+    e.dataset.suit = s; // set suit attribute
+    e.dataset.pile = p; // set pile attribute
+    e.draggable = true; // make card draggable
+    e.id = 'card-' + r + '-' + s; // create unique id using rank and suit
+    e.innerHTML = html; // insert html to element
+    // query for pile
+    var pile = document.querySelector(selector);
+    // append to pile
+    if (append) pile.appendChild(e);
+    // or prepend to pile
+    else pile.insertBefore(e, pile.firstChild);
+
+    // Add drag-and-drop event listeners
+    e.addEventListener('dragstart', handleDragStart);
+    e.addEventListener('dragover', handleDragOver);
+    e.addEventListener('dragleave', handleDragLeave);
+    e.addEventListener('drop', handleDrop);
+    e.addEventListener('dragend', handleDragEnd);
+}
+
+// Drag-and-drop event handler functions go here
+// ...
+
+function handleDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.classList.add('dragging');
+    $table.dataset.source = e.target.parentElement.dataset.pile; // Storing the source pile
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.target.classList.add('over'); // Optional: for styling while dragging over
+}
+
+function handleDragLeave(e) {
+    e.target.classList.remove('over'); // Optional: for removing styling when not dragging over
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.target.classList.remove('over'); // Optional: for removing styling on drop
+    var data = e.dataTransfer.getData('text/plain');
+    var card = document.getElementById(data);
+    var targetPile = e.target.closest('.pile'); // Ensure you're dropping onto a pile
+
+    if (targetPile && card) {
+        // Attempt to move the card to the target pile based on the game's rules
+        var sourcePileName = $table.dataset.source;
+        var targetPileName = targetPile.dataset.pile;
+        var cardData = card.dataset;
+        
+        if (validateMove([cardData.rank, cardData.suit], targetPileName)) {
+            move(table[sourcePileName], table[targetPileName], true);
+            reset(table);
+            render(table, playedCards);
+            play(table);
+        }
+    }
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    // Remove the source data as the drag operation is over
+    delete $table.dataset.source;
+    // Other cleanup if necessary
+}
+
+// You'll need to ensure validateMove and other referenced functions (move, reset, render, play) are compatible with these handlers
+
+
       }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
    // check for played cards
       function checkForPlayedCards(playedCards) {
@@ -1375,71 +1468,4 @@ Optional Features:
          tick();
 
       }
-
-
-
-function createCard(card, selector, html, append) {
-    var e = document.createElement('li');
-    e.className = 'card';
-    e.id = 'card-' + card[0] + '-' + card[1]; // Example id format: "card-AH" for Ace of Hearts
-    e.dataset.rank = card[0];
-    e.dataset.suit = card[1];
-    e.draggable = true;
-    e.innerHTML = html;
-    var pile = document.querySelector(selector);
-    if (append) {
-        pile.appendChild(e);
-    } else {
-        pile.insertBefore(e, pile.firstChild);
-    }
-
-    // Add event listeners for drag and drop
-    e.addEventListener('dragstart', handleDragStart);
-    e.addEventListener('dragover', handleDragOver);
-    e.addEventListener('dragleave', handleDragLeave);
-    e.addEventListener('drop', handleDrop);
-}
-
-function handleDragStart(event) {
-    // Your code for handling drag start
-}
-
-function handleDragOver(event) {
-    // Your code for handling drag over
-    event.preventDefault(); // Necessary for allowing drop
-}
-
-function handleDragLeave(event) {
-    // Your code for handling drag leave
-}
-
-function handleDrop(event) {
-    // Your code for handling drop
-    event.preventDefault();
-    var cardID = event.dataTransfer.getData('text');
-    var cardElement = document.getElementById(cardID);
-    var sourcePile = cardElement.dataset.pile;
-    var destinationPile = this.dataset.pile;
-
-    // Extract rank and suit from card ID
-    var cardDetails = cardID.split('-'); // cardID example: "card-AH"
-    var card = [cardDetails[1], cardDetails[2]];
-
-    // Check if move is valid
-    if (validateMove(card, destinationPile)) {
-        // Make move
-        makeMove(sourcePile, destinationPile, cardElement);
-        // Possible functions to call after move
-        reset(table);
-        render(table, playedCards);
-        play(table);
-    }
-}
-
-// Modify makeMove to accept cardElement and move the element
-function makeMove(sourcePile, destinationPile, cardElement) {
-    // Move card element to new pile
-    // Additional logic for updating the game state
-}
-
 
