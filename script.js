@@ -1482,3 +1482,29 @@ function createCard(card, selector, html, append) {
 
 
 
+// Assuming 'table' and other necessary variables are already defined as per your script
+
+// Bind click event specifically for the stock pile
+function setupStockClick() {
+    const stockPile = document.querySelector('#stock');
+    stockPile.addEventListener('click', function(event) {
+        // Prevent interference from drag events
+        if (!event.target.classList.contains('dragging')) {
+            // Logic to move card from stock to waste
+            if (table['stock'].length) {
+                move(table['stock'], table['waste']);
+                console.log("Card moved from stock to waste.");
+                reset(table);
+                render(table, playedCards);
+                play(table);
+            } else {
+                console.log("Stock pile is empty.");
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    addDragEventListeners(); // Make sure drag event listeners are added
+    setupStockClick();       // Setup click handling for the stock pile
+});
