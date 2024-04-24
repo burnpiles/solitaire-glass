@@ -159,6 +159,22 @@ body {
    margin-bottom: 10px;
    padding: 5px;
 }
+/* Assuming this CSS is added to your style.css */
+.pile, .foundation {
+    border: 1px solid black;
+    padding: 10px;
+    margin: 5px;
+    min-height: 50px;
+    background-color: white;
+}
+.foundation {
+    width: 60px;
+    transition: background-color 0.3s;
+}
+.foundation:hover {
+    background-color: lightblue; /* Highlight when hovered */
+}
+
 .pile:last-child {
    margin-right: 0;
 }
