@@ -1565,23 +1565,52 @@ function createCard(card, selector, html, append) {
 }
 
 
+
+
 function handleDrop(e) {
     e.preventDefault();
     var data = e.dataTransfer.getData('text/plain');
     var card = document.getElementById(data);
 
+    // Check if the target is a valid drop target
     if (this !== card && this.classList.contains('pile')) {
-        this.appendChild(card);
-        card.classList.remove('dragging');
+        // Retrieve the last card of the drop target pile to compare
+        var lastCardInPile = this.querySelector('.card:last-child');
+        var canPlaceCard = false; // A flag to determine if the move is valid
 
-        // Calculate new top margin based on number of cards in the pile
-        var cardsInPile = this.querySelectorAll('.card');
-        var offset = 30; // Vertical offset for each card, adjust as needed
-        cardsInPile.forEach((card, index) => {
-            card.style.top = `${index * offset}px`;
-        });
+        // If there's no card in the pile, it's a valid move (if the card is a King)
+        if (!lastCardInPile && card.dataset.rank === 'K') {
+            canPlaceCard = true;
+        }
+        // If there's a card in the pile, check the rules to see if the card can be placed
+        else if (lastCardInPile) {
+            var lastCardColor = (lastCardInPile.dataset.suit === 'heart' || lastCardInPile.dataset.suit === 'diamond') ? 'red' : 'black';
+            var movingCardColor = (card.dataset.suit === 'heart' || card.dataset.suit === 'diamond') ? 'red' : 'black';
+            var lastCardRank = parseRankAsInt(lastCardInPile.dataset.rank);
+            var movingCardRank = parseRankAsInt(card.dataset.rank);
 
-        console.log("Drop successful onto:", this);
+            // Valid move if the moving card has opposite color and rank one less than the last card in the pile
+            if (lastCardColor !== movingCardColor && lastCardRank === movingCardRank + 1) {
+                canPlaceCard = true;
+            }
+        }
+
+        // If the move is valid, append the card to the pile
+        if (canPlaceCard) {
+            this.appendChild(card);
+            card.classList.remove('dragging');
+
+            // Adjust the top offset for the card placement in the pile
+            var cardsInPile = this.querySelectorAll('.card');
+            var offset = 30; // Vertical offset for each card, adjust as needed
+            cardsInPile.forEach((cardElement, index) => {
+                cardElement.style.top = `${index * offset}px`;
+            });
+
+            console.log("Drop successful onto:", this);
+        } else {
+            console.log("Invalid move. You cannot place this card here.");
+        }
     } else {
         console.log("Drop failed. Target is not a pile or is the card itself.");
     }
