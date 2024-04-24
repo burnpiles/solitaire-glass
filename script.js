@@ -1375,3 +1375,65 @@ Optional Features:
          tick();
 
       }
+
+
+// Modify createCard function to include draggable attribute
+function createCard(card, selector, html, append) {
+   var e = document.createElement('li'); // Creating a new card element
+   e.className = 'card'; // Assigning class name
+   e.dataset.rank = card[0]; // Setting data attributes for rank
+   e.dataset.suit = card[1]; // Setting data attributes for suit
+   e.draggable = true; // Making the card draggable
+   e.innerHTML = html; // Setting the inner HTML to include rank and suit visuals
+   var pile = document.querySelector(selector);
+   if (append) {
+       pile.appendChild(e); // Append the card to the specified pile
+   } else {
+       pile.insertBefore(e, pile.firstChild); // Or insert it at the beginning
+   }
+}
+
+// Event Listeners for Drag and Drop
+function addDragEventListeners() {
+   var cards = document.querySelectorAll('.card');
+   cards.forEach(function(card) {
+      card.addEventListener('dragstart', handleDragStart, false);
+      card.addEventListener('dragover', handleDragOver, false);
+      card.addEventListener('drop', handleDrop, false);
+      card.addEventListener('dragend', handleDragEnd, false);
+   });
+
+   var piles = document.querySelectorAll('.pile');
+   piles.forEach(function(pile) {
+      pile.addEventListener('dragover', handleDragOver, false);
+      pile.addEventListener('drop', handleDrop, false);
+   });
+}
+
+// Drag Functions
+function handleDragStart(e) {
+   e.dataTransfer.setData('text/plain', e.target.id);
+   e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+   e.preventDefault(); // Necessary to allow dropping
+   e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+   e.preventDefault();
+   var data = e.dataTransfer.getData('text/plain');
+   var card = document.getElementById(data);
+   if (this !== card && this.className.includes('pile')) {
+      this.appendChild(card);
+      // Optional: add gameplay logic here, e.g., validate move
+   }
+}
+
+function handleDragEnd(e) {
+   // Optional: clean up or revert styles here
+}
+
+// Initialize Drag and Drop after setting up the table
+document.addEventListener('DOMContentLoaded', addDragEventListeners); // Ensure the DOM is fully loaded before attaching event listeners
