@@ -1569,39 +1569,44 @@ function createCard(card, selector, html, append) {
 
 
 
+
+
+
+
 function handleDrop(e) {
     e.preventDefault();
     var data = e.dataTransfer.getData('text/plain');
     var draggedCard = document.getElementById(data);
 
-    // Ensure the target is a pile and not the card itself
     if (this !== draggedCard && this.classList.contains('pile')) {
         var targetCard = this.querySelector('.card:last-child'); // Get the last card of the pile
         var isMoveValid = false;
 
         if (targetCard) {
-            // Determine the colors based on suit
-            var draggedCardColor = (draggedCard.dataset.suit === 'hearts' || draggedCard.dataset.suit === 'diamonds') ? 'red' : 'black';
-            var targetCardColor = (targetCard.dataset.suit === 'hearts' || targetCard.dataset.suit === 'diamonds') ? 'red' : 'black';
-
-            // Get the numeric ranks of both cards
             var draggedCardRank = parseRankAsInt(draggedCard.dataset.rank);
             var targetCardRank = parseRankAsInt(targetCard.dataset.rank);
+            var draggedCardSuit = draggedCard.dataset.suit;
+            var targetCardSuit = targetCard.dataset.suit;
 
-            // Check if the dragged card can be placed on the target card (opposite colors and consecutive ranks)
-            if (draggedCardColor !== targetCardColor && draggedCardRank === targetCardRank - 1) {
+            // Determine if the suits are alternating in color
+            var isAlternatingSuit = (isRedSuit(draggedCardSuit) !== isRedSuit(targetCardSuit));
+
+            // Ensure that the rank of the card being dragged is one less than the target card
+            if (isAlternatingSuit && (draggedCardRank === targetCardRank - 1)) {
                 isMoveValid = true;
             }
-        } else if (draggedCard.dataset.rank === 'K') {
+        } else {
             // Allow a King to be placed on an empty pile
-            isMoveValid = true;
+            if (draggedCard.dataset.rank === 'K') {
+                isMoveValid = true;
+            }
         }
 
-        // If the move is valid, append the dragged card to this pile
         if (isMoveValid) {
-            this.appendChild(draggedCard);
-            draggedCard.classList.remove('dragging');
-            updatePileVisuals(this);
+            this.appendChild(draggedCard); // Append the card to the pile
+            draggedCard.classList.remove('dragging'); // Remove the dragging class
+            updatePileVisuals(this); // Adjust the styling of the pile
+            flipLastCardInPile(this); // Flip the last card if necessary
             console.log("Drop successful onto:", this);
         } else {
             console.log("Invalid move. You cannot place this card here.");
@@ -1611,13 +1616,37 @@ function handleDrop(e) {
     }
 }
 
-// Updates the visual stacking of the cards in the pile
-function updatePileVisuals(pile) {
-    var cards = pile.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-        card.style.top = `${index * 30}px`; // Update this value if you need a different offset
-    });
+// Helper function to check if a suit is red
+function isRedSuit(suit) {
+    return suit === 'hearts' || suit === 'diamonds';
 }
+
+// This function needs to be called within the `handleDrop` to flip the last card if it's face down
+function flipLastCardInPile(pile) {
+    var lastCard = pile.querySelector('.card:last-child');
+    if (lastCard && lastCard.classList.contains('face-down')) {
+        lastCard.classList.remove('face-down'); // This assumes 'face-down' is the class for facedown cards
+        lastCard.classList.add('face-up'); // And 'face-up' is the class for faceup cards
+        // Add any additional logic needed for flipping a card
+    }
+}
+
+// Call this function to update the visuals of a pile, such as after a card is dropped
+function updatePileVisuals(pile) {
+    // ... (existing implementation of updating pile visuals)
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
