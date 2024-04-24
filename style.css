@@ -758,17 +758,3 @@ body {
    grammarly-card {
        display: none;
    }
-
-
-
-.card {
-  cursor: grab; /* Indicates a grabbable object */
-}
-
-.card:active {
-  cursor: grabbing; /* Cursor while dragging */
-}
-
-.card[draggable="true"] {
-  opacity: 1; /* Ensure full opacity for draggable items */
-}
