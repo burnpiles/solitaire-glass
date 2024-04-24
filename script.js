@@ -1373,3 +1373,41 @@ Optional Features:
             }
          };
          tick();
+
+// Basic Drag and Drop Handlers
+function dragStart(event) {
+  event.dataTransfer.setData("text/plain", event.target.id);
+}
+
+function allowDrop(event) {
+  event.preventDefault();
+}
+
+function drop(event) {
+  event.preventDefault();
+  var data = event.dataTransfer.getData("text");
+  var card = document.getElementById(data);
+  var dropTarget = event.target;
+  if (dropTarget.classList.contains('pile')) { // Ensure dropping only on allowed piles
+    dropTarget.appendChild(card);
+  }
+}
+
+// Adding Event Listeners to cards and piles
+function addDragEvents() {
+  var cards = document.querySelectorAll('.card');
+  var piles = document.querySelectorAll('.pile');
+
+  cards.forEach(card => {
+    card.setAttribute('draggable', true);
+    card.addEventListener('dragstart', dragStart);
+  });
+
+  piles.forEach(pile => {
+    pile.addEventListener('dragover', allowDrop);
+    pile.addEventListener('drop', drop);
+  });
+}
+
+// Call this function at the end of your game setup
+addDragEvents();
