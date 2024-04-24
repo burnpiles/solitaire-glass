@@ -1567,46 +1567,41 @@ function createCard(card, selector, html, append) {
 
 
 
+
+
 function handleDrop(e) {
     e.preventDefault();
     var data = e.dataTransfer.getData('text/plain');
-    var card = document.getElementById(data);
+    var draggedCard = document.getElementById(data);
 
-    // Check if the target is a valid drop target
-    if (this !== card && this.classList.contains('pile')) {
-        // Retrieve the last card of the drop target pile to compare
-        var lastCardInPile = this.querySelector('.card:last-child');
-        var canPlaceCard = false; // A flag to determine if the move is valid
+    // Ensure the target is a pile and not the card itself
+    if (this !== draggedCard && this.classList.contains('pile')) {
+        var targetCard = this.querySelector('.card:last-child'); // Get the last card of the pile
+        var isMoveValid = false;
 
-        // If there's no card in the pile, it's a valid move (if the card is a King)
-        if (!lastCardInPile && card.dataset.rank === 'K') {
-            canPlaceCard = true;
-        }
-        // If there's a card in the pile, check the rules to see if the card can be placed
-        else if (lastCardInPile) {
-            var lastCardColor = (lastCardInPile.dataset.suit === 'heart' || lastCardInPile.dataset.suit === 'diamond') ? 'red' : 'black';
-            var movingCardColor = (card.dataset.suit === 'heart' || card.dataset.suit === 'diamond') ? 'red' : 'black';
-            var lastCardRank = parseRankAsInt(lastCardInPile.dataset.rank);
-            var movingCardRank = parseRankAsInt(card.dataset.rank);
+        if (targetCard) {
+            // Determine the colors based on suit
+            var draggedCardColor = (draggedCard.dataset.suit === 'hearts' || draggedCard.dataset.suit === 'diamonds') ? 'red' : 'black';
+            var targetCardColor = (targetCard.dataset.suit === 'hearts' || targetCard.dataset.suit === 'diamonds') ? 'red' : 'black';
 
-            // Valid move if the moving card has opposite color and rank one less than the last card in the pile
-            if (lastCardColor !== movingCardColor && lastCardRank === movingCardRank + 1) {
-                canPlaceCard = true;
+            // Get the numeric ranks of both cards
+            var draggedCardRank = parseRankAsInt(draggedCard.dataset.rank);
+            var targetCardRank = parseRankAsInt(targetCard.dataset.rank);
+
+            // Check if the dragged card can be placed on the target card (opposite colors and consecutive ranks)
+            if (draggedCardColor !== targetCardColor && draggedCardRank === targetCardRank - 1) {
+                isMoveValid = true;
             }
+        } else if (draggedCard.dataset.rank === 'K') {
+            // Allow a King to be placed on an empty pile
+            isMoveValid = true;
         }
 
-        // If the move is valid, append the card to the pile
-        if (canPlaceCard) {
-            this.appendChild(card);
-            card.classList.remove('dragging');
-
-            // Adjust the top offset for the card placement in the pile
-            var cardsInPile = this.querySelectorAll('.card');
-            var offset = 30; // Vertical offset for each card, adjust as needed
-            cardsInPile.forEach((cardElement, index) => {
-                cardElement.style.top = `${index * offset}px`;
-            });
-
+        // If the move is valid, append the dragged card to this pile
+        if (isMoveValid) {
+            this.appendChild(draggedCard);
+            draggedCard.classList.remove('dragging');
+            updatePileVisuals(this);
             console.log("Drop successful onto:", this);
         } else {
             console.log("Invalid move. You cannot place this card here.");
@@ -1615,3 +1610,32 @@ function handleDrop(e) {
         console.log("Drop failed. Target is not a pile or is the card itself.");
     }
 }
+
+// Updates the visual stacking of the cards in the pile
+function updatePileVisuals(pile) {
+    var cards = pile.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.top = `${index * 30}px`; // Update this value if you need a different offset
+    });
+}
+
+
+
+
+
+
+
+function flipLastCardInPile(pile) {
+    var lastCard = pile.querySelector('.card:last-child');
+    if (lastCard && lastCard.classList.contains('face-down')) {
+        lastCard.classList.remove('face-down');
+        lastCard.classList.add('face-up');
+        // Add any additional scoring or gameplay logic here for flipping a card
+    }
+}
+
+// This function needs to be called after a card is moved, within the 'makeMove' function.
+
+
+
+
