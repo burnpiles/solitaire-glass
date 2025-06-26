@@ -221,6 +221,18 @@ Optional Features:
 
    // move card
       function move(source, dest, pop, selectedCards = 1) {
+         // Defensive: ensure source and dest are always arrays
+         if (!Array.isArray(source)) {
+            console.warn('move(): source is not array, fixing');
+            source = [];
+         }
+         if (!Array.isArray(dest)) {
+            console.warn('move(): dest is not array, fixing');
+            dest = [];
+         }
+         console.log('move() called with:', { source, dest, pop, selectedCards });
+         console.log('Source before:', source);
+         console.log('Dest before:', dest);
          if (pop !== true) {
             var card = source.shift(); // take card from bottom
             dest.push(card); // push card to destination pile
@@ -233,7 +245,7 @@ Optional Features:
                // put it in the destination pile
                dest.push(card);
                // decrement
-               selectedCards--; 
+               selectedCards--;
             }
          }
          return;
@@ -241,6 +253,7 @@ Optional Features:
 
    // render table
       function render(table, playedCards) {
+         fixTableauArrays(); // Defensive: always fix tableau before rendering
          console.log('Rendering Table...');
 
          // check for played cards
@@ -342,7 +355,17 @@ Optional Features:
          if ( selector.includes('#hearts') ) var p = 'hearts';
          if ( selector.includes('#diamonds') ) var p = 'diamonds';
          if ( selector.includes('#clubs') ) var p = 'clubs';
-         if ( selector.includes('#tab') ) var p = 'tab';
+         if ( selector.includes('#tab') ) {
+            // Extract the pile number from the selector for tableau cards
+            var match = selector.match(/#tab li:nth-child\((\d+)\)/);
+            if (match) {
+               var p = match[1]; // Use the actual pile number (1-7)
+               console.log('Creating tableau card:', card, 'for pile:', p, 'selector:', selector);
+            } else {
+               var p = 'tab'; // Fallback
+               console.log('Creating tableau card with fallback pile:', card, 'selector:', selector);
+            }
+         }
          var e = d.createElement('li'); // create li element
          e.className = 'card'; // add .card class to element
          e.dataset.rank = r; // set rank atribute
@@ -376,6 +399,7 @@ Optional Features:
 
    // check for empty piles
       function checkForEmptyPiles(table) {
+         fixTableauArrays(); // Defensive: always fix tableau before checking
          // reset empty data on all piles
          var els = d.querySelectorAll('.pile'); // query elements
          for (var e in els) { // loop through elements
@@ -404,13 +428,14 @@ Optional Features:
          }
          // check tableau piles
          var tabs = table['tab'];
-            // loop through tableau piles
-            for (var i = 1; i <= 7; i++) {
-               // check tabeau pile
-               if ( tabs[i].length === 0 ) {
-                  emptyPiles += ', #tab li:nth-child('+i+').pile';
-               }
+         // Defensive: ensure tabs is an array of length 8
+         if (!Array.isArray(tabs)) tabs = [];
+         for (let i = 1; i <= 7; i++) {
+            if (!Array.isArray(tabs[i])) tabs[i] = [];
+            if ( tabs[i].length === 0 ) {
+               emptyPiles += ', #tab li:nth-child('+i+').pile';
             }
+         }
          // mark piles as empty
          els = d.querySelectorAll(emptyPiles); // query elements
          for (var e in els) { // loop through elements
@@ -575,10 +600,6 @@ Optional Features:
       var clickDelay = 200; // set delay for double click
       var clickTimer = null; // set timer for timeout function
       function select(event) {
-
-         // prevent default
-         event.preventDefault();
-
          // start timer
          if ( $timer.dataset.action !== 'start' ) {
             timer('start');
@@ -778,7 +799,7 @@ Optional Features:
             // if destination pile is tableau
             else {
                // if rank isn't in sequence then return false
-               if (dRank - sRank !== 1) {
+               if (sRank !== dRank - 1) {
                  console.log('Rank sequence invalid');
                  return false;
                }
@@ -839,12 +860,22 @@ Optional Features:
 
    // make move
       function makeMove() {
+         fixTableauArrays(); // Defensive: always fix tableau before move
          console.log('Making Move...');
 
          // get source and dest
          var source = $table.dataset.source;
          var dest = $table.dataset.dest;
-         console.log('From '+source+' pile to '+dest+' pile');
+         console.log('From', source, 'pile to', dest, 'pile');
+         console.log('Type of source:', typeof source, 'Type of dest:', typeof dest);
+         console.log('table:', table);
+         console.log('table["tab"]:', table['tab']);
+         console.log('table["tab"][source]:', table['tab'] && table['tab'][source]);
+         console.log('table["tab"][dest]:', table['tab'] && table['tab'][dest]);
+
+         // Always use numbers for indices
+         var sourceNum = !isNaN(source) ? Number(source) : source;
+         var destNum = !isNaN(dest) ? Number(dest) : dest;
 
          // if pulling card from waste pile
          if ( source === 'waste') {
@@ -857,7 +888,7 @@ Optional Features:
             // if moving card to tableau pile
             else {
                console.log('Moving To Tableau Pile');
-               move(table[source], table['tab'][dest], true);
+               move(table[source], table['tab'][destNum], true);
                updateScore(5); // score 5 pts
             }
          }
@@ -872,7 +903,7 @@ Optional Features:
             // if moving card to tableau pile
             else {
                console.log('Moving To Tableau Pile');
-               move(table[source], table['tab'][dest], true);
+               move(table[source], table['tab'][destNum], true);
                updateScore(-15); // score -15 pts
             }
          }
@@ -882,7 +913,7 @@ Optional Features:
             // if moving card to foundation pile
             if ( isNaN(dest) ) {
                console.log('Moving To Foundation Pile');
-               move(table['tab'][source], table[dest], true);
+               move(table['tab'][sourceNum], table[dest], true);
                updateScore(10); // score 10 pts
             }
             // if moving card to tableau pile
@@ -896,12 +927,14 @@ Optional Features:
                   if (selected.nodeType) selectedCards.push(selected);
                }
                // move card(s)
+               console.log('Before move: source pile:', table['tab'][sourceNum], 'dest pile:', table['tab'][destNum]);
                move(
-                  table['tab'][source],
-                  table['tab'][dest],
+                  table['tab'][sourceNum],
+                  table['tab'][destNum],
                   true,
                   selectedCards.length
                );
+               console.log('After move: source pile:', table['tab'][sourceNum], 'dest pile:', table['tab'][destNum]);
             }
          }
 
@@ -929,6 +962,7 @@ Optional Features:
 
          // reset table
          console.log('Ending Move...');
+         fixTableauArrays(); // Defensive: always fix tableau after move
 
          return;
       }
@@ -1375,3 +1409,33 @@ Optional Features:
          tick();
 
       }
+
+   // Make key functions globally accessible for drag and drop
+   window.validateMove = validateMove;
+   window.makeMove = makeMove;
+   window.reset = reset;
+   window.render = render;
+   window.play = play;
+   window.table = table;
+   window.playedCards = playedCards;
+   
+   console.log('Global functions set:', {
+     validateMove: typeof window.validateMove,
+     makeMove: typeof window.makeMove,
+     reset: typeof window.reset,
+     render: typeof window.render,
+     play: typeof window.play,
+     table: typeof window.table,
+     playedCards: typeof window.playedCards
+   });
+
+   function fixTableauArrays() {
+      // Always ensure table['tab'] is an array of length 8, with 1-7 as arrays
+      if (!Array.isArray(table['tab'])) table['tab'] = [];
+      for (let i = 1; i <= 7; i++) {
+         if (!Array.isArray(table['tab'][i])) {
+            table['tab'][i] = [];
+         }
+      }
+      table['tab'].length = 8;
+   }
