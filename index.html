@@ -444,6 +444,21 @@
     // Stack the cards visually, copying computed styles
     // For tableau: offset each card downward and layer above the previous, so the drag image matches the tableau
     const stackElsForImage = stackEls;
+    // Calculate pixel offset based on the real offset between stacked cards in the tableau
+    let realOffsetPx = 0;
+    if (!isWaste && stackElsForImage.length > 1) {
+      const first = stackElsForImage[0];
+      const second = stackElsForImage[1];
+      const firstTop = first.getBoundingClientRect().top;
+      const secondTop = second.getBoundingClientRect().top;
+      realOffsetPx = Math.abs(secondTop - firstTop);
+    } else if (stackElsForImage.length > 0) {
+      // Fallback: use 15.5em converted to px based on card's font size
+      const fontSize = parseFloat(window.getComputedStyle(stackElsForImage[0]).fontSize) || 16;
+      realOffsetPx = 15.5 * fontSize;
+    } else {
+      realOffsetPx = 50; // fallback
+    }
     stackElsForImage.forEach((cardEl, i) => {
       const clone = cardEl.cloneNode(true);
       const computed = window.getComputedStyle(cardEl);
@@ -455,7 +470,7 @@
       clone.style.borderRadius = computed.borderRadius;
       clone.style.boxShadow = computed.boxShadow;
       clone.style.position = 'absolute';
-      clone.style.top = `calc(${i} * 6em)`;
+      clone.style.top = `${i * realOffsetPx}px`;
       clone.style.left = '0px';
       clone.style.opacity = '1';
       clone.style.pointerEvents = 'none';
@@ -502,7 +517,7 @@
         var validationTarget = destCard || destPile;
         var isValid = false;
         if (typeof validateMove === 'function') {
-          isValid = validateMove(selectedCard, validationTarget);
+          isValid = validateMove(selectedCard, validationTarget, destPile);
         }
         
         if (isValid) {
@@ -554,41 +569,46 @@
 
     // Check if this is a foundation pile (not a number)
     let destPileArr;
-    if (isNaN(destPileIndex)) {
-      // Foundation pile
+    const isFoundation = isNaN(destPileIndex);
+    if (isFoundation) {
       if (!table[destPileName]) table[destPileName] = [];
       destPileArr = table[destPileName];
     } else {
-      // Tableau pile
       destPileArr = table['tab'][destPileIndex];
     }
 
     let destCard = null;
     if (destPileArr && destPileArr.length > 0) {
-      const lastCard = destPileArr[destPileArr.length - 1];
-      destCard = [lastCard[0], lastCard[1]];
+      destCard = destPileArr[destPileArr.length - 1]; // Only [rank, suit]
     }
     // Use only [rank, suit] for validation
-    const selectedCard = [dragData.stack[0][0], dragData.stack[0][1]];
+    const selectedCard = dragData.stack[0];
     let valid = false;
-    if (destCard) {
-      valid = validateMove(selectedCard, destCard);
+    // Use the same logic as double-click for foundation moves
+    if (isFoundation) {
+      valid = validateMove(selectedCard, destPileName, destPileName);
+    } else if (destCard) {
+      valid = validateMove(selectedCard, destCard, destPileName);
     } else {
-      valid = validateMove(selectedCard, isNaN(destPileIndex) ? destPileName : destPileIndex);
+      valid = validateMove(selectedCard, destPileIndex, destPileName);
     }
     if (valid) {
+      if (typeof pushUndoState === 'function') pushUndoState();
       let stack;
-      // Waste pile: remove from table['waste']
-      if (e.dataTransfer && dragSrcEl && dragSrcEl.closest('#waste')) {
-        stack = table['waste'].splice(dragData.cardIndex, 1);
-      } else {
-        // Tableau: remove stack from source pile (from cardIndex to end)
-        stack = table['tab'][dragData.pileIndex].splice(dragData.cardIndex);
-      }
-      // Add stack to dest pile
-      if (isNaN(destPileIndex)) {
+      if (isFoundation) {
+        // Only move the top card for foundation
+        if (dragSrcEl && dragSrcEl.closest('#waste')) {
+          stack = table['waste'].splice(dragData.cardIndex, 1);
+        } else {
+          stack = [table['tab'][dragData.pileIndex].splice(dragData.cardIndex, 1)[0]];
+        }
         table[destPileName].push(...stack);
       } else {
+        if (dragSrcEl && dragSrcEl.closest('#waste')) {
+          stack = table['waste'].splice(dragData.cardIndex, 1);
+        } else {
+          stack = table['tab'][dragData.pileIndex].splice(dragData.cardIndex);
+        }
         table['tab'][destPileIndex].push(...stack);
       }
       render(table, playedCards);
@@ -637,6 +657,174 @@
       updateDragAndDrop();
     };
   }
+
+  // 1. Ensure mobile drag-and-drop (touch events) is always enabled and re-bound after render
+  function enableMobileDragAndDrop() {
+    if (!('ontouchstart' in window)) return;
+    let touchDragImage = null;
+    let touchStartTarget = null;
+
+    function onTouchStart(e) {
+      if (!e.target.classList.contains('up')) return;
+      touchStartTarget = e.target;
+      handleDragStart({
+        target: e.target,
+        preventDefault: () => {},
+        dataTransfer: {
+          setData: () => {},
+          effectAllowed: 'move',
+          setDragImage: () => {}
+        }
+      });
+      touchDragImage = currentDragImage;
+      if (touchDragImage) {
+        touchDragImage.style.display = 'block';
+        touchDragImage.style.pointerEvents = 'none';
+      }
+      document.body.appendChild(touchDragImage);
+    }
+
+    function onTouchMove(e) {
+      if (!touchDragImage) return;
+      const touch = e.touches[0];
+      touchDragImage.style.left = (touch.clientX - 20) + 'px';
+      touchDragImage.style.top = (touch.clientY - 20) + 'px';
+      e.preventDefault();
+    }
+
+    function onTouchEnd(e) {
+      if (!touchDragImage) return;
+      const touch = e.changedTouches[0];
+      const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (dropTarget) {
+        handleDrop({
+          target: dropTarget,
+          preventDefault: () => {},
+          dataTransfer: null
+        });
+      }
+      if (touchDragImage && touchDragImage.parentNode) {
+        touchDragImage.parentNode.removeChild(touchDragImage);
+      }
+      touchDragImage = null;
+      handleDragEnd({ target: touchStartTarget });
+      touchStartTarget = null;
+    }
+
+    function bindTouchListeners() {
+      document.querySelectorAll('.card.up').forEach(card => {
+        card.removeEventListener('touchstart', onTouchStart);
+        card.removeEventListener('touchmove', onTouchMove);
+        card.removeEventListener('touchend', onTouchEnd);
+        card.addEventListener('touchstart', onTouchStart, { passive: false });
+        card.addEventListener('touchmove', onTouchMove, { passive: false });
+        card.addEventListener('touchend', onTouchEnd, { passive: false });
+      });
+    }
+    // Always re-bind after render
+    var originalRender = window.render;
+    if (originalRender) {
+      window.render = function(table, playedCards) {
+        originalRender(table, playedCards);
+        bindTouchListeners();
+      };
+    } else {
+      bindTouchListeners();
+    }
+  }
+  enableMobileDragAndDrop();
+
+  // 2. Refactor #score area to use flexbox for perfect alignment of the reset button
+  const scoreDiv = document.querySelector('#score');
+  if (scoreDiv) {
+    scoreDiv.style.display = 'flex';
+    scoreDiv.style.alignItems = 'center';
+    scoreDiv.style.justifyContent = 'space-between';
+    scoreDiv.style.flexWrap = 'wrap';
+    scoreDiv.style.gap = '0.5em';
+    // Find or create the reset button
+    let resetBtn = document.getElementById('reset-btn');
+    if (!resetBtn) {
+      resetBtn = document.createElement('button');
+      resetBtn.id = 'reset-btn';
+      scoreDiv.appendChild(resetBtn);
+    }
+    resetBtn.textContent = '⟳ Reset';
+    resetBtn.style.padding = '0.5em 1.2em';
+    resetBtn.style.fontSize = '1.1em';
+    resetBtn.style.background = 'linear-gradient(180deg, #fff 0%, #e0e0e0 100%)';
+    resetBtn.style.border = '1px solid #bbb';
+    resetBtn.style.borderRadius = '8px';
+    resetBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+    resetBtn.style.cursor = 'pointer';
+    resetBtn.style.fontWeight = 'bold';
+    resetBtn.style.color = '#222';
+    resetBtn.style.margin = '0 0 0 1em';
+    resetBtn.onmouseover = function() { resetBtn.style.background = '#f5f5f5'; };
+    resetBtn.onmouseout = function() { resetBtn.style.background = 'linear-gradient(180deg, #fff 0%, #e0e0e0 100%)'; };
+    resetBtn.onclick = function() { location.reload(); };
+    // Responsive: full width on small screens
+    resetBtn.style.flexShrink = '0';
+    resetBtn.style.minWidth = '100px';
+
+    // Add Undo button
+    let undoBtn = document.getElementById('undo-btn');
+    // Create a button row container if not present
+    let buttonRow = document.querySelector('#score .button-row');
+    if (!buttonRow) {
+      buttonRow = document.createElement('div');
+      buttonRow.className = 'button-row';
+      // Place button row as the last child of #score
+      scoreDiv.appendChild(buttonRow);
+    }
+    // Always create or move Reset and Undo buttons into the button row
+    buttonRow.appendChild(resetBtn);
+    if (!undoBtn) {
+      undoBtn = document.createElement('button');
+      undoBtn.id = 'undo-btn';
+      undoBtn.textContent = '↶ Undo';
+    }
+    buttonRow.appendChild(undoBtn);
+    // Disable Undo if stack is empty
+    function updateUndoButtonState() {
+      if (window.undoStack && window.undoStack.length > 0) {
+        undoBtn.disabled = false;
+        undoBtn.style.opacity = '1';
+        undoBtn.style.pointerEvents = 'auto';
+      } else {
+        undoBtn.disabled = true;
+        undoBtn.style.opacity = '0.5';
+        undoBtn.style.pointerEvents = 'none';
+      }
+    }
+    undoBtn.onclick = function() { if (window.undoMove) { window.undoMove(); updateUndoButtonState(); } };
+    window.updateUndoButtonState = updateUndoButtonState;
+    // Call after every render
+    var origRender = window.render;
+    window.render = function(table, playedCards) {
+      origRender(table, playedCards);
+      updateUndoButtonState();
+    };
+    updateUndoButtonState();
+
+    // Responsive: stack on mobile
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media (max-width: 600px) {
+        #score { flex-direction: column; align-items: stretch; }
+        #reset-btn { margin: 0.5em 0 0 0; width: 100%; min-width: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Mobile card overlap: increase vertical offset for stacked cards
+  function getCardOffset() {
+    return window.innerWidth <= 600 ? 5 : 3; // 5em for mobile, 3em for desktop
+  }
+
+  // After initializing undoStack and after the first pushUndoState in the game setup, call updateUndoButtonState() to ensure Undo is disabled at game start.
+  if (window.updateUndoButtonState) window.updateUndoButtonState();
 </script>
 
 
