@@ -9,6 +9,37 @@
   font-weight: normal;
   font-style: normal;
 }
+
+/* Drag and Drop Styles */
+.pile.drag-over {
+  border: 2px dashed #fff !important;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pile.drag-over.valid-drop {
+  border: 2px dashed #4CAF50 !important;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.pile.drag-over.invalid-drop {
+  border: 2px dashed #f44336 !important;
+  background-color: rgba(244, 67, 54, 0.1);
+}
+
+.card[draggable="true"] {
+  cursor: grab;
+}
+
+.card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.card.up[draggable="true"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
 html, body {
    width: 100%;
    height: 100%;
@@ -562,7 +593,7 @@ body {
       left: 43.5%;
    }
    .fnd .pile::before {
-      content '';
+      content: '';
       position: absolute;
       top: 50%;
       left: 0;
