@@ -144,6 +144,10 @@ Optional Features:
    var lastEventTime = 0;
    var unplayedTabCards = [];
 
+   // --- UNDO STACK ---
+   var undoStack = [];
+   window.undoStack = undoStack;
+
 // 1. CREATE DECK
    deck = create(deck, suits);
 
@@ -155,6 +159,7 @@ Optional Features:
 
 // 4. RENDER TABLE
    render(table, playedCards);
+   updateUndoButtonState();
 
 // 5. START GAMEPLAY
    play(table);
@@ -292,6 +297,7 @@ Optional Features:
          $table.style.opacity = '100';
 
          console.log('Table Rendered:', table);
+         updateMobileTableauSpacing();
          return;
       }
 
@@ -679,7 +685,7 @@ Optional Features:
                   console.log('Status: Stock Pile Clicked');
                   // if stock isn't empty
                   if (table['stock'].length) {
-                     // move card from stock to waste
+                     pushUndoState();
                      move(table['stock'], table['waste']);
                      reset(table);
                      render(table, playedCards);
@@ -699,8 +705,9 @@ Optional Features:
                   unbindClick('#stock .reload-icon');
                   // reload stock pile
                   if (table['waste'].length) {
-                     table['stock'] = table['waste']; // move waste to stock
-                     table['waste'] = [] // empty waste
+                     pushUndoState();
+                     table['stock'] = table['waste'];
+                     table['waste'] = [];
                   }
                   // render table
                   render(table, playedCards);
@@ -767,8 +774,8 @@ Optional Features:
       }
 
    // validate move
-      function validateMove(selected, dest) {
-         console.log ('Validating Move...', selected, dest);
+      function validateMove(selected, dest, destPileName) {
+         console.log ('Validating Move...', selected, dest, destPileName);
 
          // if selected card exists
          if (selected) {
@@ -776,19 +783,20 @@ Optional Features:
             var sSuit = selected[1];
          }
 
+         // Use explicit destPileName if provided, else fallback to $table.dataset.dest
+         var dPile = destPileName || ($table && $table.dataset && $table.dataset.dest);
+
          // if destination is another card
-         if (dest.constructor === Array) {
+         if (dest && dest.constructor === Array) {
             console.log('Desitination appears to be a card');
             var dRank = parseRankAsInt(dest[0]);
             var dSuit = dest[1];
-            var dPile = $table.dataset.dest;
             // if destination pile is foundation
-            if (['spades','hearts','diamonds','clubs'].indexOf(dPile) >= 0) {
+            if (["spades","hearts","diamonds","clubs"].indexOf(dPile) >= 0) {
                // if rank isn't in sequence then return false
-               if (dRank - sRank !== -1) {
-                 console.log('Rank sequence invalid');
-                 console.log(dRank - sRank)
-                 return false;
+               if (sRank !== dRank + 1) {
+                  console.log('Rank sequence invalid');
+                  return false;
                }
                // if suit isn't in sequence then return false
                if ( sSuit !== dSuit ) {
@@ -800,28 +808,26 @@ Optional Features:
             else {
                // if rank isn't in sequence then return false
                if (sRank !== dRank - 1) {
-                 console.log('Rank sequence invalid');
-                 return false;
+                  console.log('Rank sequence invalid');
+                  return false;
                }
                // if suit isn't in sequence then return false
                if ( ( (sSuit === 'spade' || sSuit === 'club') &&
                   (dSuit === 'spade' || dSuit === 'club') ) ||
                   ( (sSuit === 'heart' || sSuit === 'diamond') &&
                   (dSuit === 'heart' || dSuit === 'diamond') ) ) {
-                 console.log('Suit sequence invalid');
-                 return false;
+                  console.log('Suit sequence invalid');
+                  return false;
                }
             }
             // else return true
             console.log('Valid move');
             return true;
-
          }
 
          // if destination is foundation pile
-         if (['spades','hearts','diamonds','clubs'].indexOf(dest) >= 0) {
+         if (["spades","hearts","diamonds","clubs"].indexOf(dest) >= 0) {
             console.log('Destination appears to be empty foundation');
-
             // get last card in destination pile
             var lastCard = d.querySelector('#'+dest+' .card:first-child');
             if (lastCard) {
@@ -839,7 +845,7 @@ Optional Features:
                return true;
             }
             // if rank isn't in sequence then return false
-            else if ( sRank - dRank !== 1 ) {
+            else if ( sRank !== dRank + 1 ) {
                console.log('Rank sequence invalid');
                return false;
             }
@@ -855,11 +861,12 @@ Optional Features:
             console.log('Destination appears tp be empty tableau');
             return true;
          }
-
       }
 
    // make move
       function makeMove() {
+         console.log('makeMove called');
+         pushUndoState(); // Save state for undo
          fixTableauArrays(); // Defensive: always fix tableau before move
          console.log('Making Move...');
 
@@ -963,6 +970,8 @@ Optional Features:
          // reset table
          console.log('Ending Move...');
          fixTableauArrays(); // Defensive: always fix tableau after move
+
+         if (typeof window.updateUndoButtonState === 'function') window.updateUndoButtonState();
 
          return;
       }
@@ -1181,7 +1190,7 @@ Optional Features:
          );
          // reset table
          reset(table);
-         render(table);
+         render(table, playedCards);
          // animate cards to foundation piles
          autoWinAnimation(table);
          // stop timer
@@ -1438,4 +1447,146 @@ Optional Features:
          }
       }
       table['tab'].length = 8;
+   }
+
+   function deepCopyTable(table) {
+     // Deep copy the table object (stock, waste, foundations, tableau)
+     return {
+       stock: JSON.parse(JSON.stringify(table.stock)),
+       waste: JSON.parse(JSON.stringify(table.waste)),
+       spades: JSON.parse(JSON.stringify(table.spades)),
+       hearts: JSON.parse(JSON.stringify(table.hearts)),
+       diamonds: JSON.parse(JSON.stringify(table.diamonds)),
+       clubs: JSON.parse(JSON.stringify(table.clubs)),
+       tab: [null].concat(table.tab.slice(1).map(pile => JSON.parse(JSON.stringify(pile))))
+     };
+   }
+
+   function getAllCardStates() {
+     // Returns an array of {rank, suit, played} for every card in the DOM
+     return Array.from(document.querySelectorAll('.card')).map(card => ({
+       rank: card.dataset.rank,
+       suit: card.dataset.suit,
+       played: card.dataset.played === 'true'
+     }));
+   }
+
+   function restoreAllCardStates(cardStates) {
+     cardStates.forEach(state => {
+       var card = document.querySelector(
+         `.card[data-rank="${state.rank}"][data-suit="${state.suit}"]`
+       );
+       if (card) {
+         if (state.played) {
+           card.dataset.played = 'true';
+           card.classList.add('up');
+         } else {
+           delete card.dataset.played;
+           card.classList.remove('up');
+         }
+       }
+     });
+   }
+
+   function pushUndoState() {
+     console.log('pushUndoState: saving state to undoStack');
+     undoStack.push({
+       table: deepCopyTable(table),
+       score: score,
+       moves: moves,
+       playedCards: playedCards,
+       cardStates: getAllCardStates()
+     });
+     console.log('undoStack length:', undoStack.length);
+   }
+
+   function updateTableauPileAttributes() {
+     // For each tableau pile
+     document.querySelectorAll('#tab .pile').forEach(pile => {
+       const cards = pile.querySelectorAll('.card');
+       let played = 0, unplayed = 0;
+       cards.forEach(card => {
+         if (card.dataset.played === 'true') played++;
+         else unplayed++;
+       });
+       pile.dataset.played = played;
+       pile.dataset.unplayed = unplayed;
+     });
+   }
+
+   function undoMove() {
+     console.log('undoMove called');
+     if (undoStack.length === 0) {
+       console.log('undoStack is empty');
+       return;
+     }
+     var prev = undoStack.pop();
+     // Restore table
+     table.stock = prev.table.stock;
+     table.waste = prev.table.waste;
+     table.spades = prev.table.spades;
+     table.hearts = prev.table.hearts;
+     table.diamonds = prev.table.diamonds;
+     table.clubs = prev.table.clubs;
+     table.tab = prev.table.tab;
+     // Restore score, moves, and playedCards
+     score = prev.score;
+     moves = prev.moves;
+     playedCards = prev.playedCards;
+     $score.dataset.score = score;
+     $score.children[1].textContent = score;
+     $moveCount.dataset.moves = moves;
+     $moveCountSpan.textContent = moves;
+     // 1. Flip all cards face down
+     flipCards('.card', 'down');
+     // 2. Render the table (this will rebuild the DOM in the correct order)
+     render(table, playedCards);
+     // 3. Restore all card face-up/face-down states BEFORE any sizing/spacing logic
+     restoreAllCardStates(prev.cardStates);
+     // 3.5. Recalculate tableau pile attributes for correct CSS spacing
+     updateTableauPileAttributes();
+     // 4. Force browser reflow to ensure CSS spacing is applied
+     document.querySelectorAll('.tab .card').forEach(card => { void card.offsetHeight; });
+     // 5. Now apply sizing and spacing
+     if (typeof sizeCards === 'function') sizeCards();
+     if (window.innerWidth <= 600 && typeof updateMobileTableauSpacing === 'function') {
+       document.querySelectorAll('.tab .card').forEach(card => {
+         card.style.removeProperty('top');
+       });
+       updateMobileTableauSpacing();
+     }
+     play(table); // Re-bind all events and update UI
+     if (typeof window.updateUndoButtonState === 'function') window.updateUndoButtonState();
+     console.log('undoMove: state restored, undoStack length now', undoStack.length);
+   }
+   window.undoMove = undoMove;
+
+   function updateMobileTableauSpacing() {
+     if (window.innerWidth > 600) return;
+     // Clear all previous top values for tableau cards
+     document.querySelectorAll('.tab .card').forEach(card => {
+       card.style.removeProperty('top');
+     });
+     // For each tableau pile
+     document.querySelectorAll('.tab .pile').forEach(pile => {
+       const cards = pile.querySelectorAll('.card');
+       cards.forEach((card, i) => {
+         // Get the card's height
+         const cardHeight = card.offsetHeight;
+         // Space each card at 40% of its height
+         card.style.setProperty('top', (i * cardHeight * 0.4) + 'px', 'important');
+       });
+     });
+   }
+
+   function updateUndoButtonState() {
+     var $undo = document.getElementById('undo');
+     if (!$undo) return;
+     if (undoStack.length === 0) {
+       $undo.disabled = true;
+       $undo.classList.add('disabled');
+     } else {
+       $undo.disabled = false;
+       $undo.classList.remove('disabled');
+     }
    }
