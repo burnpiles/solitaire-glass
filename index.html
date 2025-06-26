@@ -303,58 +303,339 @@
   <script  src="./script.js"></script>
 
 <script>
+  // Global variables for drag and drop
+  var dragSrcEl = null;
+  var dragData = null;
+  var isDragging = false;
+
+  // Add a global reference for the drag image
+  var currentDragImage = null;
+
   document.addEventListener('DOMContentLoaded', function() {
-    var cards = document.querySelectorAll('.card');
+    // Initialize drag and drop after the game has rendered
+    setTimeout(initializeDragAndDrop, 100);
+  });
+
+  function initializeDragAndDrop() {
+    // Make face-up cards in tableau draggable
+    var cards = document.querySelectorAll('.tab .card.up');
     cards.forEach(function(card) {
       card.setAttribute('draggable', true);
       card.addEventListener('dragstart', handleDragStart, false);
       card.addEventListener('dragend', handleDragEnd, false);
     });
-
+    // Make top card in waste pile draggable
+    var wasteCard = document.querySelector('#waste .card.up');
+    if (wasteCard) {
+      wasteCard.setAttribute('draggable', true);
+      wasteCard.addEventListener('dragstart', handleDragStart, false);
+      wasteCard.addEventListener('dragend', handleDragEnd, false);
+    }
+    // Make piles droppable
     var piles = document.querySelectorAll('.pile');
     piles.forEach(function(pile) {
       pile.addEventListener('dragover', handleDragOver, false);
       pile.addEventListener('drop', handleDrop, false);
+      pile.addEventListener('dragenter', handleDragEnter, false);
+      pile.addEventListener('dragleave', handleDragLeave, false);
     });
-  });
+    // Make foundation piles droppable
+    var foundations = document.querySelectorAll('#fnd .pile');
+    foundations.forEach(function(foundation) {
+      foundation.addEventListener('dragover', handleDragOver, false);
+      foundation.addEventListener('drop', handleDrop, false);
+      foundation.addEventListener('dragenter', handleDragEnter, false);
+      foundation.addEventListener('dragleave', handleDragLeave, false);
+    });
+  }
+
+  // Helper to get pile index from a card element
+  function getPileIndexFromCard(cardEl) {
+    // Only works for tableau piles (data-pile 1-7)
+    return Number(cardEl.closest('.pile').dataset.pile);
+  }
+
+  // Helper to get card index within its pile
+  function getCardIndexInPile(cardEl) {
+    const pileEl = cardEl.closest('.pile');
+    const cards = Array.from(pileEl.querySelectorAll('.card.up'));
+    return cards.indexOf(cardEl);
+  }
 
   function handleDragStart(e) {
-    this.style.opacity = '0.4';  // this / e.target is the source node.
-    dragSrcEl = this;
+    if (!e.target.classList.contains('up')) {
+      e.preventDefault();
+      return false;
+    }
+    
+    isDragging = true;
+    dragSrcEl = e.target;
+    
+    // Get source pile
+    const pileIndex = getPileIndexFromCard(e.target);
+    let pileArr;
+    let isWaste = false;
+    if (e.target.closest('#waste')) {
+      pileArr = table['waste'];
+      isWaste = true;
+    } else {
+      pileArr = table['tab'][pileIndex];
+    }
+    // Find the index of the dragged card in the data array
+    const rank = e.target.dataset.rank;
+    const suit = e.target.dataset.suit;
+    const cardIndex = pileArr.findIndex(card => card[0] === rank && card[1] === suit);
+    if (cardIndex === -1) {
+      e.preventDefault();
+      return false;
+    }
+    // Only allow dragging if the card is face-up
+    const pileEl = e.target.closest('.pile');
+    const upCards = Array.from(pileEl.querySelectorAll('.card.up'));
+    const upCardIndices = upCards.map(cardEl => {
+      const r = cardEl.dataset.rank;
+      const s = cardEl.dataset.suit;
+      return pileArr.findIndex(card => card[0] === r && card[1] === s);
+    });
+    if (!upCardIndices.includes(cardIndex)) {
+      e.preventDefault();
+      return false;
+    }
+    // Waste pile: only allow dragging the top card
+    if (isWaste) {
+      if (cardIndex !== pileArr.length - 1) {
+        e.preventDefault();
+        return false;
+      }
+    }
+    // Store drag data for stack movement
+    dragData = {
+      pileIndex,
+      cardIndex,
+      stack: isWaste ? [pileArr[cardIndex]] : pileArr.slice(cardIndex)
+    };
+    // Set up the same state as click system
+    const card = [rank, suit];
+    e.target.dataset.selected = 'true';
+    $table.dataset.move = 'true';
+    $table.dataset.selected = card;
+    $table.dataset.source = pileIndex;
+    // --- Custom drag image for stack (improved) ---
+    // Waste: only show the top card
+    let stackEls;
+    if (isWaste) {
+      stackEls = [e.target];
+    } else {
+      // Tableau: show stack from dragged card down, top card first
+      const allCardsInPile = Array.from(pileEl.querySelectorAll('.card.up'));
+      const dragCardIdx = allCardsInPile.indexOf(e.target);
+      stackEls = allCardsInPile.slice(dragCardIdx);
+    }
+    // Create a container for the drag image
+    const dragImage = document.createElement('div');
+    dragImage.style.position = 'absolute';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '9999';
+    dragImage.style.top = '-1000px'; // offscreen
+    dragImage.style.left = '-1000px';
+    dragImage.style.background = 'none';
+    dragImage.style.border = 'none';
+    dragImage.style.opacity = '1';
+    // Stack the cards visually, copying computed styles
+    // For tableau: offset each card downward and layer above the previous, so the drag image matches the tableau
+    const stackElsForImage = stackEls;
+    stackElsForImage.forEach((cardEl, i) => {
+      const clone = cardEl.cloneNode(true);
+      const computed = window.getComputedStyle(cardEl);
+      clone.style.width = computed.width;
+      clone.style.height = computed.height;
+      clone.style.background = computed.background;
+      clone.style.backgroundColor = computed.backgroundColor;
+      clone.style.border = computed.border;
+      clone.style.borderRadius = computed.borderRadius;
+      clone.style.boxShadow = computed.boxShadow;
+      clone.style.position = 'absolute';
+      clone.style.top = `calc(${i} * 6em)`;
+      clone.style.left = '0px';
+      clone.style.opacity = '1';
+      clone.style.pointerEvents = 'none';
+      clone.style.zIndex = (i + 1).toString(); // Each next card is above the previous
+      dragImage.appendChild(clone);
+    });
+    document.body.appendChild(dragImage);
+    currentDragImage = dragImage;
+    // Set drag image (offset so mouse is on the top card)
+    e.dataTransfer.setDragImage(dragImage, 20, 20);
+    // --- End custom drag image ---
+
+    e.target.style.opacity = '0.4';
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.innerHTML);
+    e.dataTransfer.setData('text/plain', ''); // Required for Firefox
   }
 
   function handleDragOver(e) {
     if (e.preventDefault) {
-      e.preventDefault(); // Necessary. Allows us to drop.
+      e.preventDefault();
     }
-    e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
+    e.dataTransfer.dropEffect = 'move';
     return false;
   }
 
+  function handleDragEnter(e) {
+    if (e.target.classList.contains('pile') || e.target.closest('.pile')) {
+      var pile = e.target.closest('.pile');
+      pile.classList.add('drag-over');
+      
+      // Check if this would be a valid drop
+      if (isDragging && dragData) {
+        var destPile = pile.dataset.pile;
+        var selectedCard = dragData.stack[0];
+        var destCard = null;
+        
+        // Check if dropping on a card
+        var pileCards = pile.querySelectorAll('.card.up');
+        if (pileCards.length > 0) {
+          var topCard = pileCards[pileCards.length - 1];
+          destCard = [topCard.dataset.rank, topCard.dataset.suit];
+        }
+        
+        var validationTarget = destCard || destPile;
+        var isValid = false;
+        if (typeof validateMove === 'function') {
+          isValid = validateMove(selectedCard, validationTarget);
+        }
+        
+        if (isValid) {
+          pile.classList.add('valid-drop');
+        } else {
+          pile.classList.add('invalid-drop');
+        }
+      }
+    }
+  }
+
+  function handleDragLeave(e) {
+    if (e.target.classList.contains('pile') || e.target.closest('.pile')) {
+      var pile = e.target.closest('.pile');
+      pile.classList.remove('drag-over', 'valid-drop', 'invalid-drop');
+    }
+  }
+
+  function clearSelectionAndMoveState() {
+    // Remove data-selected from all cards
+    document.querySelectorAll('.card[data-selected]').forEach(card => {
+      delete card.dataset.selected;
+    });
+    // Remove move state from table
+    var table = document.querySelector('#table');
+    if (table) {
+      delete table.dataset.move;
+      delete table.dataset.selected;
+      delete table.dataset.source;
+      delete table.dataset.dest;
+    }
+  }
+
   function handleDrop(e) {
-    if (e.stopPropagation) {
-      e.stopPropagation(); // Stops some browsers from redirecting.
+    // Defensive: check dragData
+    if (!dragData || !dragData.stack) {
+      clearSelectionAndMoveState();
+      return false;
+    }
+    // Find destination pile
+    const targetPileEl = e.target.closest('.pile');
+    if (!targetPileEl) {
+      clearSelectionAndMoveState();
+      return false;
+    }
+    const destPileIndex = Number(targetPileEl.dataset.pile);
+    const destPileName = targetPileEl.dataset.pile;
+    $table.dataset.dest = destPileIndex;
+
+    // Check if this is a foundation pile (not a number)
+    let destPileArr;
+    if (isNaN(destPileIndex)) {
+      // Foundation pile
+      if (!table[destPileName]) table[destPileName] = [];
+      destPileArr = table[destPileName];
+    } else {
+      // Tableau pile
+      destPileArr = table['tab'][destPileIndex];
     }
 
-    // Don't do anything if dropping the same card we're dragging.
-    if (dragSrcEl != this) {
-      // Set the source column's HTML to the HTML of the column we dropped on.
-      dragSrcEl.innerHTML = this.innerHTML;
-      this.innerHTML = e.dataTransfer.getData('text/html');
+    let destCard = null;
+    if (destPileArr && destPileArr.length > 0) {
+      const lastCard = destPileArr[destPileArr.length - 1];
+      destCard = [lastCard[0], lastCard[1]];
     }
-
+    // Use only [rank, suit] for validation
+    const selectedCard = [dragData.stack[0][0], dragData.stack[0][1]];
+    let valid = false;
+    if (destCard) {
+      valid = validateMove(selectedCard, destCard);
+    } else {
+      valid = validateMove(selectedCard, isNaN(destPileIndex) ? destPileName : destPileIndex);
+    }
+    if (valid) {
+      let stack;
+      // Waste pile: remove from table['waste']
+      if (e.dataTransfer && dragSrcEl && dragSrcEl.closest('#waste')) {
+        stack = table['waste'].splice(dragData.cardIndex, 1);
+      } else {
+        // Tableau: remove stack from source pile (from cardIndex to end)
+        stack = table['tab'][dragData.pileIndex].splice(dragData.cardIndex);
+      }
+      // Add stack to dest pile
+      if (isNaN(destPileIndex)) {
+        table[destPileName].push(...stack);
+      } else {
+        table['tab'][destPileIndex].push(...stack);
+      }
+      render(table, playedCards);
+    }
+    clearSelectionAndMoveState();
     return false;
   }
 
   function handleDragEnd(e) {
-    // this/e.target is the source node.
-    this.style.opacity = '1';
-
-    cards.forEach(function(card) {
-      card.style.opacity = '1';
+    isDragging = false;
+    dragSrcEl = null;
+    dragData = null;
+    e.target.style.opacity = '1';
+    document.querySelectorAll('.pile').forEach(pile => {
+      pile.classList.remove('drag-over', 'valid-drop', 'invalid-drop');
     });
+    clearSelectionAndMoveState();
+    // Remove the drag image if it exists
+    if (currentDragImage && currentDragImage.parentNode) {
+      currentDragImage.parentNode.removeChild(currentDragImage);
+      currentDragImage = null;
+    }
+    // Re-bind all events and restore stock pile functionality
+    if (typeof play === 'function') play(table);
+  }
+
+  // Re-initialize drag and drop when cards are updated
+  function updateDragAndDrop() {
+    // Remove existing drag listeners
+    var cards = document.querySelectorAll('.card[draggable="true"]');
+    cards.forEach(function(card) {
+      card.removeEventListener('dragstart', handleDragStart);
+      card.removeEventListener('dragend', handleDragEnd);
+      card.removeAttribute('draggable');
+    });
+
+    // Re-initialize after a short delay
+    setTimeout(initializeDragAndDrop, 50);
+  }
+
+  // Override the render function to update drag and drop
+  var originalRender = window.render;
+  if (originalRender) {
+    window.render = function(table, playedCards) {
+      originalRender(table, playedCards);
+      updateDragAndDrop();
+    };
   }
 </script>
 
