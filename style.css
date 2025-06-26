@@ -4,8 +4,9 @@
 
 @font-face {
   font-family: 'Suit-Regular';
-  src: url("https://bfa.github.io/solitaire-js/fonts/suit-regular.eot");
-  src: url("https://bfa.github.io/solitaire-js/fonts/suit-regular.eot?#iefix") format('embedded-opentype'), url("https://bfa.github.io/solitaire-js/fonts/suit-regular.woff") format('woff'), url("https://bfa.github.io/solitaire-js/fonts/suit-regular.ttf") format('truetype'), url("https://bfa.github.io/solitaire-js/fonts/suit-regular.svg#suit-regular") format('svg');
+  src: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/suit-regular.woff') format('woff'),
+       url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/suit-regular.ttf') format('truetype'),
+       url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/suit-regular.svg#suit-regular') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -47,7 +48,7 @@ html, body {
 body {
    position: relative;
    color: #f3f5f7;
-   background: #0e8b44 url('https://bfa.github.io/solitaire-js/img/green_felt.jpg');
+   background: #0e8b44 url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/green_felt.jpg');
    background-size: cover;
    background-position: center;
 }
@@ -209,7 +210,7 @@ body {
    top: 0;
    left: 0;
    background-color: #ddd;
-   background-image: url('https://bfa.github.io/solitaire-js/img/card_back_bg.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/card_back_bg.png');
    background-size: contain;
    background-repeat: no-repeat;
    width: 100%;
@@ -244,7 +245,7 @@ body {
    display: none;
 }
 .card.up {
-   background-image: url('https://bfa.github.io/solitaire-js/img/card_face_bg.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/card_face_bg.png');
    background-repeat: repeat;
    color: #111;
 }
@@ -346,40 +347,40 @@ body {
    }
 }
 .card .spade.king .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-king-spade.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-king-spade.png');
 }
 .card .spade.queen .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-queen-spade.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-queen-spade.png');
 }
 .card .spade.jack .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-jack-spade.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-jack-spade.png');
 }
 .card .heart.king .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-king-heart.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-king-heart.png');
 }
 .card .heart.queen .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-queen-heart.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-queen-heart.png');
 }
 .card .heart.jack .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-jack-heart.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-jack-heart.png');
 }
 .card .diamond.king .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-king-diamond.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-king-diamond.png');
 }
 .card .diamond.queen .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-queen-diamond.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-queen-diamond.png');
 }
 .card .diamond.jack .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-jack-diamond.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-jack-diamond.png');
 }
 .card .club.king .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-king-club.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-king-club.png');
 }
 .card .club.queen .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-queen-club.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-queen-club.png');
 }
 .card .club.jack .face::before {
-   background-image: url('https://bfa.github.io/solitaire-js/img/face-jack-club.png');
+   background-image: url('https://raw.githubusercontent.com/burnpiles/solitaire-glass/main/cards/face-jack-club.png');
 }
 .card .suit.top_center {
    left: 50%;
@@ -789,3 +790,92 @@ body {
    grammarly-card {
        display: none;
    }
+
+@media screen and (max-width: 767px) {
+  .tab .card:nth-child(2) { top: 30em; left: 0; }
+  .tab .card:nth-child(3) { top: 60em; left: 0; }
+  .tab .card:nth-child(4) { top: 90em; left: 0; }
+  .tab .card:nth-child(5) { top: 120em; left: 0; }
+  .tab .card:nth-child(6) { top: 150em; left: 0; }
+  .tab .card:nth-child(7) { top: 180em;  left: 0; }
+  .tab .card:nth-child(8) { top: 210em;  left: 0; }
+  .tab .card:nth-child(9) { top: 240em;  left: 0; }
+  .tab .card:nth-child(10) { top: 270em;  left: 0; }
+  .tab .card:nth-child(11) { top: 300em;  left: 0; }
+  .tab .card:nth-child(12) { top: 330em;  left: 0; }
+  .tab .card:nth-child(13) { top: 360em;  left: 0; }
+  .tab .card:nth-child(14) { top: 390em;  left: 0; }
+  .tab .card:nth-child(15) { top: 420em;  left: 0; }
+  .tab .card:nth-child(16) { top: 450em;  left: 0; }
+  .tab .card:nth-child(17) { top: 480em;  left: 0; }
+  .tab .card:nth-child(18) { top: 510em;  left: 0; }
+  .tab .card:nth-child(19) { top: 540em;  left: 0; }
+  .tab .card:nth-child(20) { top: 570em;  left: 0; }
+  .tab .card:nth-child(21) { top: 600em;  left: 0; }
+}
+
+@media screen and (max-width: 600px) {
+  .tab .card:nth-child(2) { top: 10em; }
+  .tab .card:nth-child(3) { top: 20em; }
+  .tab .card:nth-child(4) { top: 30em; }
+  .tab .card:nth-child(5) { top: 40em; }
+  .tab .card:nth-child(6) { top: 50em; }
+  .tab .card:nth-child(7) { top: 60em; }
+  .tab .card:nth-child(8) { top: 70em; }
+  .tab .card:nth-child(9) { top: 80em; }
+  .tab .card:nth-child(10) { top: 90em; }
+  .tab .card:nth-child(11) { top: 100em; }
+  .tab .card:nth-child(12) { top: 110em; }
+  .tab .card:nth-child(13) { top: 120em; }
+  .tab .card:nth-child(14) { top: 130em; }
+  .tab .card:nth-child(15) { top: 140em; }
+  .tab .card:nth-child(16) { top: 150em; }
+  .tab .card:nth-child(17) { top: 160em; }
+  .tab .card:nth-child(18) { top: 170em; }
+  .tab .card:nth-child(19) { top: 180em; }
+  .tab .card:nth-child(20) { top: 190em; }
+  .tab .card:nth-child(21) { top: 200em; }
+}
+
+/* --- Button Row for Reset/Undo --- */
+#score .button-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1em;
+  margin-top: 1em;
+}
+#score .button-row button {
+  min-width: 120px;
+  padding: 0.5em 1.2em;
+  font-size: 1.1em;
+  background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  cursor: pointer;
+  font-weight: bold;
+  color: #222;
+  margin: 0;
+  flex-shrink: 0;
+}
+#score .button-row button:hover {
+  background: #f5f5f5;
+}
+@media (max-width: 600px) {
+  #score .button-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1em !important;
+    margin-top: 1em;
+  }
+  #score .button-row button {
+    min-width: 120px;
+    width: auto;
+    margin: 0;
+    font-size: 1.1em;
+    padding: 0.5em 1.2em;
+  }
+}
