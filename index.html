@@ -1,833 +1,913 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en" data-theme="standard-light">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Solitaire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Mono:wght@300;400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-GF8S00ZL6D"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+:root{
+  /* Mobile: fill screen. Desktop: smaller fixed size */
+  --card-w:calc((100vw - 14px - 12px) / 7.5);
+  --card-h:calc(var(--card-w) * 1.45);
+  --gap:3px;
+  --card-fs:calc(var(--card-w) * 0.055);
+}
+@media(min-width:600px){
+  :root{
+    --card-w:calc((100vw - 20px - 12px) / 10.98);
+    --gap:4px;
+  }
+}
 
-  gtag('config', 'G-GF8S00ZL6D');
-</script>
+/* ══════════ THEMES ══════════ */
+[data-theme="standard-light"]{
+  --bg:#3D7A3D; --surface:rgba(0,0,0,0.06); --hdr-border:rgba(0,0,0,0.12);
+  --tf:'Libre Baskerville',serif; --uf:'Libre Baskerville',serif;
+  --title-c:rgba(255,255,255,0.55); --stat-c:rgba(255,255,255,0.48); --stat-v:rgba(255,255,255,0.95);
+  --btn-b:rgba(255,255,255,0.28); --btn-c:rgba(255,255,255,0.55); --accent:#FFFFFF;
+  --empty-b:rgba(0,0,0,0.18); --found-b:rgba(255,255,255,0.22); --found-s:rgba(255,255,255,0.14);
+  --card-face:#FFFFFF; --card-b:rgba(0,0,0,0.12); --card-black:#111111; --card-red:#C0001A;
+  --card-shad:0 3px 12px rgba(0,0,0,0.35);
+  --back-bg:linear-gradient(140deg,#265A26,#1C461C); --back-b:rgba(255,255,255,0.1);
+  --back-line:rgba(255,255,255,0.04); --back-pip:rgba(255,255,255,0.08);
+  --drop-c:#FFD700; --drop-g:rgba(255,215,0,0.28);
+  --win-bg:rgba(61,122,61,0.70); --win-c:#FFD700;
+  --tbtn-bg:rgba(0,0,0,0.08); --tbtn-act:rgba(255,255,255,0.18); --tbtn-actc:#FFFFFF; --tbtn-c:rgba(255,255,255,0.5);
+}
+[data-theme="standard-dark"]{
+  --bg:#1C301C; --surface:rgba(255,255,255,0.025); --hdr-border:rgba(255,255,255,0.09);
+  --tf:'Libre Baskerville',serif; --uf:'Libre Baskerville',serif;
+  --title-c:rgba(255,255,255,0.38); --stat-c:rgba(255,255,255,0.3); --stat-v:rgba(255,255,255,0.82);
+  --btn-b:rgba(255,255,255,0.18); --btn-c:rgba(255,255,255,0.38); --accent:#F0D080;
+  --empty-b:rgba(255,255,255,0.12); --found-b:rgba(240,208,128,0.22); --found-s:rgba(240,208,128,0.1);
+  --card-face:#FAFAF7; --card-b:rgba(0,0,0,0.16); --card-black:#111111; --card-red:#BB1111;
+  --card-shad:0 4px 18px rgba(0,0,0,0.65);
+  --back-bg:linear-gradient(140deg,#1E4D20,#163818); --back-b:rgba(255,255,255,0.08);
+  --back-line:rgba(255,255,255,0.035); --back-pip:rgba(255,255,255,0.06);
+  --drop-c:#F0D080; --drop-g:rgba(240,208,128,0.28);
+  --win-bg:rgba(28,48,28,0.70); --win-c:#F0D080;
+  --tbtn-bg:rgba(255,255,255,0.04); --tbtn-act:rgba(240,208,128,0.12); --tbtn-actc:#F0D080; --tbtn-c:rgba(255,255,255,0.32);
+}
+[data-theme="future-light"]{
+  --bg:#EAF0FA; --surface:rgba(0,0,0,0.02); --hdr-border:rgba(0,0,0,0.08);
+  --tf:'Cormorant Garamond',serif; --uf:'DM Mono',monospace;
+  --title-c:rgba(10,20,60,0.32); --stat-c:rgba(10,20,60,0.28); --stat-v:rgba(10,20,60,0.75);
+  --btn-b:rgba(0,0,0,0.13); --btn-c:rgba(10,20,60,0.32); --accent:#0066CC;
+  --empty-b:rgba(0,0,0,0.1); --found-b:rgba(0,102,204,0.2); --found-s:rgba(0,102,204,0.14);
+  --card-face:#FFFFFF; --card-b:rgba(0,0,0,0.1); --card-black:#0F1830; --card-red:#CC1122;
+  --card-shad:0 2px 10px rgba(0,20,80,0.13);
+  --back-bg:linear-gradient(140deg,#B8CCDF,#A0BACC); --back-b:rgba(0,80,180,0.18);
+  --back-line:rgba(0,80,180,0.06); --back-pip:rgba(0,80,180,0.1);
+  --drop-c:#0066CC; --drop-g:rgba(0,102,204,0.2);
+  --win-bg:rgba(234,240,250,0.70); --win-c:#0066CC;
+  --tbtn-bg:rgba(0,0,0,0.04); --tbtn-act:rgba(0,102,204,0.1); --tbtn-actc:#0066CC; --tbtn-c:rgba(10,20,60,0.32);
+}
+[data-theme="future-dark"]{
+  --bg:#06060F; --surface:rgba(255,255,255,0.015); --hdr-border:rgba(255,255,255,0.07);
+  --tf:'Cormorant Garamond',serif; --uf:'DM Mono',monospace;
+  --title-c:rgba(255,255,255,0.28); --stat-c:rgba(255,255,255,0.2); --stat-v:rgba(255,255,255,0.72);
+  --btn-b:rgba(255,255,255,0.12); --btn-c:rgba(255,255,255,0.28); --accent:#00D8FF;
+  --empty-b:rgba(255,255,255,0.07); --found-b:rgba(0,216,255,0.15); --found-s:rgba(0,216,255,0.1);
+  --card-face:#0D0D1E; --card-b:rgba(255,255,255,0.12); --card-black:#CDD2EE; --card-red:#FF3A52;
+  --card-shad:0 3px 14px rgba(0,0,0,0.72);
+  --back-bg:linear-gradient(140deg,#0A1428,#151530); --back-b:rgba(0,180,255,0.12);
+  --back-line:rgba(0,180,255,0.04); --back-pip:rgba(0,180,255,0.08);
+  --drop-c:#00D8FF; --drop-g:rgba(0,216,255,0.22);
+  --win-bg:rgba(6,6,15,0.70); --win-c:#00D8FF;
+  --tbtn-bg:rgba(255,255,255,0.04); --tbtn-act:rgba(0,216,255,0.12); --tbtn-actc:#00D8FF; --tbtn-c:rgba(255,255,255,0.28);
+}
+[data-theme="smart-glass"]{
+  --bg:transparent; --surface:rgba(255,255,255,0.06); --hdr-border:rgba(255,255,255,0.1);
+  --tf:'DM Mono',monospace; --uf:'DM Mono',monospace;
+  --title-c:rgba(255,255,255,0.5); --stat-c:rgba(255,255,255,0.35); --stat-v:rgba(255,255,255,0.9);
+  --btn-b:rgba(255,255,255,0.15); --btn-c:rgba(255,255,255,0.5); --accent:#00FFD0;
+  --empty-b:rgba(255,255,255,0.1); --found-b:rgba(0,255,208,0.2); --found-s:rgba(0,255,208,0.12);
+  --card-face:rgba(255,255,255,0.15); --card-b:rgba(255,255,255,0.18); --card-black:rgba(255,255,255,0.9); --card-red:#FF4466;
+  --card-shad:0 2px 16px rgba(0,0,0,0.4);
+  --back-bg:linear-gradient(140deg,rgba(0,40,80,0.5),rgba(0,20,50,0.6)); --back-b:rgba(0,255,208,0.15);
+  --back-line:rgba(0,255,208,0.05); --back-pip:rgba(0,255,208,0.12);
+  --drop-c:#00FFD0; --drop-g:rgba(0,255,208,0.2);
+  --win-bg:rgba(0,0,0,0.52); --win-c:#00FFD0;
+  --tbtn-bg:rgba(255,255,255,0.05); --tbtn-act:rgba(0,255,208,0.12); --tbtn-actc:#00FFD0; --tbtn-c:rgba(255,255,255,0.35);
+  --card-h:calc(var(--card-w) * 1.015);
+}
 
-  <meta charset="UTF-8">
-  <title>Play Solitaire Now</title>
-  <meta property="og:image" content="https://i.imgur.com/tcmz9Af.png"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"><link rel='stylesheet' href='https://bfa.github.io/solitaire-js/css/bootstrap.min.css'><link rel="stylesheet" href="./style.css">
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:auto;overflow-x:hidden;position:relative;}
 
+[data-theme^="future"] body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(128,128,200,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(128,128,200,0.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+[data-theme="future-dark"] body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 40% at 15% 5%,rgba(0,180,255,0.04),transparent 70%),radial-gradient(ellipse 50% 30% at 85% 95%,rgba(100,0,200,0.04),transparent 70%);pointer-events:none;z-index:0;}
+[data-theme^="standard"] body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(0,0,0,0.07) 1px,transparent 0);background-size:3px 3px;pointer-events:none;z-index:0;}
+
+/* ─── HEADER ─── */
+#main-wrap{max-width:calc(var(--card-w)*7 + 6*var(--gap) + 48px);margin:0 auto;}
+
+/* Hamburger button — always visible */
+#menu-btn{display:block;background:transparent;border:1px solid var(--btn-b);color:var(--btn-c);
+  font-size:18px;padding:5px 10px;border-radius:2px;cursor:pointer;line-height:1;flex-shrink:0;}
+#settings-bar{display:none;}
+
+/* Drawer */
+#menu-drawer{position:fixed;top:0;right:-280px;width:260px;height:100%;
+  background:var(--bg);border-left:1px solid var(--hdr-border);
+  z-index:5000;transition:right 0.25s ease;padding:20px 16px;
+  display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
+#menu-drawer.open{right:0;}
+#menu-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:4999;}
+#menu-overlay.open{display:block;}
+.menu-section-label{font-family:var(--uf);font-size:9px;letter-spacing:0.2em;
+  color:var(--stat-c);text-transform:uppercase;margin-bottom:2px;}
+#menu-drawer .t-btn{width:100%;text-align:left;}
+#header{position:relative;z-index:10;display:flex;align-items:center;padding:14px 18px 12px;border-bottom:1px solid var(--hdr-border);background:var(--surface);gap:14px;}
+#title{font-family:var(--tf);font-size:16px;font-weight:400;letter-spacing:0.5em;color:var(--title-c);text-transform:uppercase;flex-shrink:0;}
+#stats{display:flex;gap:14px;align-items:center;flex:1;}
+.stat-item{font-family:var(--uf);font-size:10px;letter-spacing:0.1em;color:var(--stat-c);display:flex;flex-direction:column;align-items:center;gap:2px;text-transform:uppercase;}
+.stat-val{font-size:20px;color:var(--stat-v);font-weight:700;line-height:1;}
+#new-btn{background:transparent;border:1px solid var(--btn-b);color:var(--btn-c);font-family:var(--uf);font-size:12px;letter-spacing:0.15em;padding:8px 16px;border-radius:2px;cursor:pointer;text-transform:uppercase;flex-shrink:0;}
+#new-btn:active{color:var(--accent);border-color:var(--accent);}
+
+/* ─── SETTINGS BAR ─── */
+.t-btn{flex-shrink:0;background:var(--tbtn-bg);border:1px solid var(--btn-b);color:var(--tbtn-c);font-family:var(--uf);font-size:11px;letter-spacing:0.1em;padding:6px 12px;border-radius:2px;cursor:pointer;text-transform:uppercase;white-space:nowrap;transition:all 0.15s;}
+.t-btn.active{background:var(--tbtn-act);border-color:var(--accent);color:var(--tbtn-actc);}
+.bar-sep{flex-shrink:0;width:1px;height:18px;background:var(--btn-b);margin:0 4px;}
+
+/* ─── GAME ─── */
+#game{position:relative;z-index:10;padding:8px 14px 20px;display:flex;flex-direction:column;gap:8px;}
+#top-row{display:flex;gap:var(--gap);align-items:flex-start;margin-bottom:4px;}
+.slot{width:var(--card-w);height:var(--card-h);flex-shrink:0;position:relative;}
+#waste{position:relative;}
+.slot-empty{border:1.5px dashed var(--empty-b);border-radius:5px;width:100%;height:100%;}
+.slot-found-empty{border:1.5px dashed var(--found-b);border-radius:5px;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+.slot-found-empty::after{content:attr(data-suit);font-size:calc(var(--card-w)*0.35);color:var(--found-s);line-height:1;}
+
+/* ─── CARDS ─── */
+.card{
+  width:var(--card-w);height:var(--card-h);
+  border-radius:6px;position:absolute;
+  cursor:grab;box-shadow:var(--card-shad);
+  overflow:hidden;
+  font-size:var(--card-fs); /* base em for all internals */
+}
+.card.face-down{background:var(--back-bg);border:1px solid var(--back-b);cursor:default;}
+.card-back{position:absolute;inset:5px;border-radius:3px;border:1px solid var(--back-b);
+  background:repeating-linear-gradient(45deg,transparent 0,transparent 3px,var(--back-line) 3px,var(--back-line) 4px),
+             repeating-linear-gradient(-45deg,transparent 0,transparent 3px,var(--back-line) 3px,var(--back-line) 4px);
+  display:flex;align-items:center;justify-content:center;}
+.card-back::after{content:'◆';font-size:calc(var(--card-w)*0.2);color:var(--back-pip);}
+
+.card.face-up{background:var(--card-face);border:1px solid var(--card-b);}
+[data-theme^="future"] .card.face-up{background:linear-gradient(150deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0) 55%),var(--card-face);}
+[data-theme="smart-glass"] .card.face-up{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.card.face-up:active{cursor:grabbing;}
+
+/* ─── CARD INTERNALS ───
+   Corner label: VALUE and SUIT side by side on one line (e.g. "A ♥")
+   in top-left and bottom-right (rotated).
+   All sizes in em → scales with --card-fs → always in sync with stacking offset.
+   Label total height ≈ 2.2em + 0.5em padding = 2.7em
+   getFU() = 5em → 2.3em breathing room guaranteed at any size.
+*/
+.ci{position:absolute;inset:0;padding:0.5em 0.6em;}
+
+/* suit top-left, number top-right, number bottom-left, suit bottom-right — ALL right-side up */
+.tl{position:absolute;top:0.35em;left:0.4em;line-height:1;}  /* SUIT top-left */
+.tr{position:absolute;top:0.35em;right:0.4em;line-height:1;} /* NUMBER top-right */
+.bl{position:absolute;bottom:0.35em;left:0.4em;line-height:1;} /* NUMBER bottom-left, upright */
+.br{position:absolute;bottom:0.35em;right:0.4em;line-height:1;} /* SUIT bottom-right, upright */
+.cv{font-family:'Libre Baskerville',serif;font-size:2.8em;font-weight:700;line-height:1;letter-spacing:-0.02em;}
+.cs{font-size:2.6em;line-height:1;}
+
+/* Hero center symbol — large, solid, high opacity */
+/* Center hero: large number + large suit side by side */
+.cc{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    display:flex;flex-direction:row;align-items:center;justify-content:center;
+    gap:0.05em;pointer-events:none;width:100%;}
+.cc .ccv{font-family:'Libre Baskerville',serif;font-size:9em;font-weight:700;line-height:1;opacity:0.82;}
+.cc .ccs{font-size:9em;line-height:1;opacity:0.82;}
+
+/* Face card image — actual <img> tag, fills card center */
+.face-img{
+  position:absolute;
+  top:14%;left:10%;width:80%;height:72%;
+  object-fit:contain;
+  display:block;
+  pointer-events:none;
+}
+
+.card.red .cv,.card.red .cs,.card.red .cc,.card.red .ccv,.card.red .ccs{color:var(--card-red);}
+.card.black .cv,.card.black .cs,.card.black .cc,.card.black .ccv,.card.black .ccs{color:var(--card-black);}
+
+/* Inactive waste cards in 3-draw mode */
+.card.inactive{cursor:default;pointer-events:none;}
+
+/* Drop highlight */
+.drop-hl{outline:2px solid var(--drop-c)!important;outline-offset:-1px;box-shadow:0 0 12px var(--drop-g),var(--card-shad)!important;}
+
+/* ─── TABLEAU ─── */
+#tableau{display:flex;gap:var(--gap);align-items:flex-start;}
+.col{width:var(--card-w);flex-shrink:0;position:relative;min-height:var(--card-h);}
+
+/* ─── GHOST ─── */
+#ghost{position:fixed;pointer-events:none;z-index:2000;display:none;width:var(--card-w);opacity:0.92;}
+#ghost .card{position:absolute;}
+
+/* ─── WIN ─── */
+#win{display:none;position:fixed;inset:0;background:var(--win-bg);z-index:3000;flex-direction:column;align-items:center;justify-content:center;gap:18px;backdrop-filter:blur(12px);}
+#win.show{display:flex;}
+.win-rule{width:1px;height:50px;background:linear-gradient(to bottom,transparent,var(--win-c),transparent);}
+#win-title{font-family:var(--tf);font-size:50px;font-weight:300;letter-spacing:0.3em;color:var(--win-c);animation:wpulse 2.5s ease-in-out infinite;}
+@keyframes wpulse{0%,100%{opacity:.88}50%{opacity:1}}
+#win-score{font-family:var(--uf);font-size:9px;letter-spacing:0.3em;color:var(--stat-c);text-align:center;line-height:2.2;text-transform:uppercase;}
+#win-score span{color:var(--stat-v);}
+#win-btn{background:transparent;border:1px solid var(--win-c);color:var(--win-c);font-family:var(--uf);font-size:9px;letter-spacing:0.2em;padding:11px 28px;border-radius:2px;cursor:pointer;text-transform:uppercase;margin-top:6px;}
+
+/* Auto-complete button */
+#autocomplete-btn{display:none;position:fixed;top:12px;left:50%;transform:translateX(-50%);
+  z-index:1000;background:var(--win-c);color:var(--bg);
+  border:none;font-family:var(--uf);font-size:11px;font-weight:700;
+  letter-spacing:0.15em;padding:8px 20px;border-radius:3px;cursor:pointer;
+  text-transform:uppercase;animation:acpulse 1.2s ease-in-out infinite;box-shadow:0 2px 16px rgba(0,0,0,0.4);}
+#autocomplete-btn.visible{display:block;}
+@keyframes acpulse{0%,100%{transform:translateX(-50%) scale(1);opacity:1;}50%{transform:translateX(-50%) scale(1.05);opacity:0.85;}}
+
+/* ── MICROSOFT-STYLE WIN: bouncing cards ── */
+#win-cards{position:fixed;inset:0;pointer-events:none;z-index:2999;overflow:hidden;}
+.win-card{position:absolute;width:var(--card-w);height:var(--card-h);
+  border-radius:6px;background:#fff;border:1px solid rgba(0,0,0,0.15);
+  box-shadow:0 4px 14px rgba(0,0,0,0.4);display:flex;align-items:center;
+  justify-content:center;font-size:calc(var(--card-w)*0.35);
+  font-family:'Libre Baskerville',serif;font-weight:700;}
+.win-card.red-c{color:#C0001A;}
+.win-card.black-c{color:#111;}
+
+/* ─── UNDO ─── */
+#undo-btn{position:fixed;bottom:20px;right:16px;z-index:100;background:var(--tbtn-bg);border:1px solid var(--btn-b);color:var(--btn-c);font-family:var(--uf);font-size:8px;letter-spacing:0.14em;padding:7px 13px;border-radius:2px;cursor:pointer;text-transform:uppercase;}
+#undo-btn:active{color:var(--accent);border-color:var(--accent);}
+</style>
 </head>
 <body>
-<!-- partial:index.partial.html -->
-<div class="container">
 
-      <div id="score">
-         <div class="timer">
-            <button id="play-pause">
-               <i id="play">Play</i>
-               <i id="pause">Pause</i>
-            </button>
-            <label>Timer:</label>
-            <span>00:00</span>
-         </div>
-         <div class="move-count" data-moves="0">
-            <label>Moves:</label>
-            <span>0</span>
-         </div>
-         <div class="score" data-score="0">
-            <label>Score:</label>
-            <span>0</span>
-         </div>
-      </div>
+<div id="main-wrap"><div id="header">
+  <div id="title">Solitaire</div>
+  <div id="stats">
+    <div class="stat-item"><span class="stat-val" id="sv">0</span>Pts</div>
+    <div class="stat-item"><span class="stat-val" id="mv">0</span>Mov</div>
+    <div class="stat-item"><span class="stat-val" id="tv">0:00</span>Time</div>
+  </div>
+  <button id="new-btn">New</button>
+  <button id="menu-btn" aria-label="Menu">&#9776;</button>
+</div>
 
-      <div id="table">
 
-         <div class="upper-row">
-            <div id="stock" class="stock pile" data-pile="stock">
-               <i class="reload-icon" data-action="reload">
-                  <span></span>
-               </i>
-               <ul></ul>
-            </div>
 
-            <div id="waste" class="waste pile" data-pile="waste">
-               <ul></ul>
-            </div>
+<!-- Hamburger drawer (mobile) -->
+<div id="menu-drawer">
+  <div id="menu-drawer-inner">
+    <div class="menu-section-label">Theme</div>
+    <button class="t-btn active" data-th="standard-light">Std · Light</button>
+    <button class="t-btn" data-th="standard-dark">Std · Dark</button>
+    <button class="t-btn" data-th="future-light">Future · Light</button>
+    <button class="t-btn" data-th="future-dark">Future · Dark</button>
+    <button class="t-btn" data-th="smart-glass">Smart Glass</button>
+    <div class="menu-section-label" style="margin-top:12px;">Draw Mode</div>
+    <button class="t-btn draw-btn active" data-draw="1">Draw 1</button>
+    <button class="t-btn draw-btn" data-draw="3">Draw 3</button>
+  </div>
+</div>
+<div id="menu-overlay"></div>
 
-            <ul id="fnd" class="fnd">
-               <li id="spades" class="spades pile" data-pile="spades" data-empty="true"><ul></ul></li>
-               <li id="hearts" class="hearts pile" data-pile="hearts" data-empty="true"><ul></ul></li>
-               <li id="diamonds" class="diamonds pile" data-pile="diamonds" data-empty="true"><ul></ul></li>
-               <li id="clubs" class="clubs pile" data-pile="clubs" data-empty="true"><ul></ul></li>
-            </ul>
-         </div>
+<div id="game">
+  <div id="top-row">
+    <div class="slot" id="stock"></div>
+    <div class="slot" id="waste"></div>
+    <div class="slot"></div>
+    <div class="slot" id="f0"></div>
+    <div class="slot" id="f1"></div>
+    <div class="slot" id="f2"></div>
+    <div class="slot" id="f3"></div>
+  </div>
+  <div id="tableau">
+    <div class="col" id="c0"></div>
+    <div class="col" id="c1"></div>
+    <div class="col" id="c2"></div>
+    <div class="col" id="c3"></div>
+    <div class="col" id="c4"></div>
+    <div class="col" id="c5"></div>
+    <div class="col" id="c6"></div>
+  </div>
+</div></div>
 
-         <div class="lower-row">
-            <ul id="tab" class="tab">
-               <li class="pile" data-pile="1"><ul></ul></li>
-               <li class="pile" data-pile="2"><ul></ul></li>
-               <li class="pile" data-pile="3"><ul></ul></li>
-               <li class="pile" data-pile="4"><ul></ul></li>
-               <li class="pile" data-pile="5"><ul></ul></li>
-               <li class="pile" data-pile="6"><ul></ul></li>
-               <li class="pile" data-pile="7"><ul></ul></li>
-            </ul>
-         </div>
+<div id="ghost"></div>
+<button id="undo-btn">Undo</button>
 
-      </div>
+<div id="win-cards"></div>
+<button id="autocomplete-btn">⚡ Auto Complete</button>
 
-   </div><!-- /.container -->
-
-   <button id="auto-win">Auto Win</button>
-
-   <canvas id="confetti"></canvas>
-
-   <ul class="template">
-      <li data-rank="2">
-         <div class="two {{suit}}">
-            <div class="corner top">
-               <span class="rank">2</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_center"></span>
-            <span class="suit bottom_center"></span>
-            <div class="corner bottom">
-               <span class="rank">2</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="3">
-         <div class="three {{suit}}">
-            <div class="corner top">
-               <span class="rank">3</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_center"></span>
-            <span class="suit middle_center"></span>
-            <span class="suit bottom_center"></span>
-            <div class="corner bottom">
-               <span class="rank">3</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="4">
-         <div class="four {{suit}}">
-            <div class="corner top">
-               <span class="rank">4</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <div class="corner bottom">
-               <span class="rank">4</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="5">
-         <div class="five {{suit}}">
-            <div class="corner top">
-               <span class="rank">5</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit middle_center"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <div class="corner bottom">
-               <span class="rank">5</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="6">
-         <div class="six {{suit}}">
-            <div class="corner top">
-               <span class="rank">6</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit middle_left"></span>
-            <span class="suit middle_right"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <div class="corner bottom">
-               <span class="rank">6</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="7">
-         <div class="seven {{suit}}">
-            <div class="corner top">
-               <span class="rank">7</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit middle_left"></span>
-            <span class="suit middle_top"></span>
-            <span class="suit middle_right"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <div class="corner bottom">
-               <span class="rank">7</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="8">
-         <div class="eight {{suit}}">
-            <div class="corner top">
-               <span class="rank">8</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit middle_left"></span>
-            <span class="suit middle_top_center"></span>
-            <span class="suit middle_right"></span>
-            <span class="suit middle_bottom_center"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <div class="corner bottom">
-               <span class="rank">8</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="9">
-         <div class="nine {{suit}}">
-            <div class="corner top">
-               <span class="rank">9</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit middle_top_left"></span>
-            <span class="suit middle_center"></span>
-            <span class="suit middle_top_right"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <span class="suit middle_bottom_left"></span>
-            <span class="suit middle_bottom_right"></span>
-            <div class="corner bottom">
-               <span class="rank">9</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="10">
-         <div class="ten {{suit}}">
-            <div class="corner top">
-               <span class="rank">10</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit top_left"></span>
-            <span class="suit top_right"></span>
-            <span class="suit middle_top_left"></span>
-            <span class="suit middle_top_center"></span>
-            <span class="suit middle_top_right"></span>
-            <span class="suit bottom_left"></span>
-            <span class="suit bottom_right"></span>
-            <span class="suit middle_bottom_center"></span>
-            <span class="suit middle_bottom_left"></span>
-            <span class="suit middle_bottom_right"></span>
-            <div class="corner bottom">
-               <span class="rank">10</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="J">
-         <div class="jack {{suit}}">
-            <div class="corner top">
-               <span class="rank">J</span>
-               <span class="suit"></span>
-            </div>
-            <span class="face middle_center"></span>
-            <div class="corner bottom">
-               <span class="rank">J</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="Q">
-         <div class="queen {{suit}}">
-            <div class="corner top">
-               <span class="rank">Q</span>
-               <span class="suit"></span>
-            </div>
-            <span class="face middle_center"></span>
-            <div class="corner bottom">
-               <span class="rank">Q</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="K">
-         <div class="king {{suit}}">
-            <div class="corner top">
-               <span class="rank">K</span>
-               <span class="suit"></span>
-            </div>
-            <span class="face middle_center"></span>
-            <div class="corner bottom">
-               <span class="rank">K</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-      <li data-rank="A">
-         <div class="ace {{suit}}">
-            <div class="corner top">
-               <span class="rank">A</span>
-               <span class="suit"></span>
-            </div>
-            <span class="suit middle_center"></span>
-            <div class="corner bottom">
-               <span class="rank">A</span>
-               <span class="suit"></span>
-            </div>
-         </div>
-      </li>
-   </ul><!-- /.templates -->
-<!-- partial -->
-  <script  src="./script.js"></script>
+<div id="win">
+  <div class="win-rule"></div>
+  <div id="win-title">You Win</div>
+  <div id="win-score">Score <span id="ws">0</span>&ensp;·&ensp;Moves <span id="wm">0</span></div>
+  <button id="win-btn">Play Again</button>
+  <div class="win-rule"></div>
+</div>
 
 <script>
-  // Global variables for drag and drop
-  var dragSrcEl = null;
-  var dragData = null;
-  var isDragging = false;
+// ══════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════
+const SUITS = ['♠','♥','♦','♣'];
+const VALS  = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RED   = new Set(['♥','♦']);
+const FACE  = new Set(['J','Q','K']);
+const vi    = v => VALS.indexOf(v) + 1;
+const isRed = s => RED.has(s);
+const clr   = s => isRed(s) ? 'red' : 'black';
 
-  // Add a global reference for the drag image
-  var currentDragImage = null;
+// Foundation slots locked by suit: f0=♠ f1=♥ f2=♦ f3=♣
+const FOUND_SUITS = ['♠','♥','♦','♣'];
+function foundIdxForSuit(s){ return FOUND_SUITS.indexOf(s); }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize drag and drop after the game has rendered
-    setTimeout(initializeDragAndDrop, 100);
+// Face card images — keyed by value+suit string e.g. "K♠"
+const BASE = 'https://cdn.jsdelivr.net/gh/burnpiles/solitaire-glass@main/cards';
+const FACE_IMGS = {
+  'K♠': BASE+'/face-king-spade.png',   'Q♠': BASE+'/face-queen-spade.png',   'J♠': BASE+'/face-jack-spade.png',
+  'K♥': BASE+'/face-king-heart.png',   'Q♥': BASE+'/face-queen-heart.png',   'J♥': BASE+'/face-jack-heart.png',
+  'K♦': BASE+'/face-king-diamond.png', 'Q♦': BASE+'/face-queen-diamond.png', 'J♦': BASE+'/face-jack-diamond.png',
+  'K♣': BASE+'/face-king-club.png',    'Q♣': BASE+'/face-queen-club.png',    'J♣': BASE+'/face-jack-club.png'
+};
+
+// ── STACKING OFFSETS (em units matching --card-fs) ──
+// Corner label: cv(2.2em) + gap(0.15em) side-by-side = 2.2em tall (single line)
+// Plus padding 0.5em → total = 2.7em
+// Measure actual rendered card width from DOM.
+function getCardPx(){
+  var col = document.getElementById('c0');
+  if(col){ var w = col.getBoundingClientRect().width || col.offsetWidth; if(w>0) return w; }
+  // fallback: compute from viewport
+  return (window.innerWidth - 46) / 7;
+}
+// getFU = 22% of card width — shows top corners clearly without too much gap
+function getFU(){ return Math.round(getCardPx() * 0.22); }
+// getFD = 14% of card width — compact face-down gap
+function getFD(){ return Math.round(getCardPx() * 0.14); }
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let G = {}, history = [], seconds = 0, timer = null;
+let DRAW = 1;
+
+function shuffle(d){for(let i=d.length-1;i>0;i--){const j=0|Math.random()*(i+1);[d[i],d[j]]=[d[j],d[i]];}return d;}
+
+function newDeck(){
+  const d=[];
+  for(const s of SUITS) for(const v of VALS) d.push({s,v,u:false});
+  return shuffle(d);
+}
+
+function initGame(){
+  clearInterval(timer); seconds=0; updateTimer();
+  const deck=newDeck();
+  const tab=[]; let di=0;
+  for(let c=0;c<7;c++){
+    const col=[];
+    for(let r=0;r<=c;r++){const cd={...deck[di++]};cd.u=(r===c);col.push(cd);}
+    tab.push(col);
+  }
+  G={stock:deck.slice(di).map(c=>({...c,u:false})),waste:[],found:[[],[],[],[]],tab,score:0,moves:0};
+  history=[];
+  timer=setInterval(()=>{seconds++;updateTimer();},1000);
+  renderAll();
+  document.getElementById('win').classList.remove('show');
+  document.getElementById('win-cards').innerHTML='';
+  document.getElementById('autocomplete-btn').classList.remove('visible');
+}
+
+function updateTimer(){
+  const m=0|seconds/60,s=seconds%60;
+  document.getElementById('tv').textContent=m+':'+(s<10?'0':'')+s;
+}
+
+function saveHistory(){ history.push(JSON.parse(JSON.stringify(G))); }
+
+// ══════════════════════════════════════
+// CARD HTML
+//
+// isTop=true  → card fully visible (top of stack / waste / foundation)
+//               shows large hero symbol or face illustration in center
+// isTop=false → card peeking under another card in tableau
+//               shows ONLY the corner label: number LEFT, suit RIGHT
+//               no center hero (it's hidden under the card above anyway)
+// ══════════════════════════════════════
+function cardInner(v, s, isTop){
+  // Top-left: NUMBER. Top-right: SUIT. Both visible in peek strip.
+  // Bottom corners are rotated mirrors of top.
+  var corners = '<div class="tl"><div class="cs">'+s+'</div></div>'+
+                '<div class="tr"><div class="cv">'+v+'</div></div>'+
+                '<div class="bl"><div class="cv">'+v+'</div></div>'+
+                '<div class="br"><div class="cs">'+s+'</div></div>';
+  if(!isTop){
+    return corners; // peeking: corners only, no hero center
+  }
+  if(FACE.has(v)){
+    var url = FACE_IMGS[v+s] || '';
+    return corners + (url ? '<img class="face-img" src="'+url+'" alt="'+v+s+'" onerror="this.style.display=\'none\';this.nextSibling&&(this.nextSibling.style.display=\'flex\')">' + '<div class="cc" style="display:none"><span class="ccv">'+v+'</span><span class="ccs">'+s+'</span></div>' : '<div class="cc"><span class="ccv">'+v+'</span><span class="ccs">'+s+'</span></div>');
+  }
+  return corners + '<div class="cc"><span class="ccv">'+v+'</span><span class="ccs">'+s+'</span></div>';
+}
+
+function faceHTML(c, attrs, isTop){
+  attrs = attrs || '';
+  if(isTop === undefined) isTop = true; // waste / foundation always full
+  return '<div class="card face-up '+clr(c.s)+'" '+attrs+'><div class="ci">'+cardInner(c.v,c.s,isTop)+'</div></div>';
+}
+
+function backHTML(attrs){
+  attrs = attrs || '';
+  return '<div class="card face-down" '+attrs+'><div class="card-back"></div></div>';
+}
+
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
+function renderAll(){
+  document.getElementById('sv').textContent=G.score;
+  document.getElementById('mv').textContent=G.moves;
+  rStock(); rWaste(); rFound(); rTab();
+  checkAutoCompleteButton();
+}
+
+function rStock(){
+  const el=document.getElementById('stock');
+  if(!G.stock.length){
+    el.innerHTML='<div class="slot-empty" style="display:flex;align-items:center;justify-content:center;cursor:pointer;border-color:var(--found-b);"><span style="font-size:calc(var(--card-w)*0.42);color:var(--found-s);">&#x21BA;</span></div>';
+  } else {
+    el.innerHTML=backHTML('data-src="stock"');
+    const n=document.createElement('div');
+    n.style.cssText='position:absolute;bottom:4px;right:5px;font-size:9px;color:rgba(128,128,128,0.35);pointer-events:none;z-index:2;font-family:monospace;';
+    n.textContent=G.stock.length; el.appendChild(n);
+  }
+}
+
+document.getElementById('stock').addEventListener('click',function(){
+  if(G.stock.length===0 && G.waste.length>0){
+    saveHistory();
+    G.stock=G.waste.slice().reverse().map(function(c){return Object.assign({},c,{u:false});});
+    G.waste=[]; G.score=Math.max(0,G.score-(DRAW===3?50:100));
+    renderAll();
+  }
+});
+
+function rWaste(){
+  const el=document.getElementById('waste');
+  if(!G.waste.length){
+    el.style.width='var(--card-w)';
+    el.innerHTML='<div class="slot-empty"></div>'; return;
+  }
+  if(DRAW===1){
+    el.style.width='var(--card-w)';
+    el.innerHTML=faceHTML(G.waste[G.waste.length-1],'data-src="waste"');
+  } else {
+    // Waste slot stays one card wide, overflow visible — cards fan RIGHT into the empty gap slot
+    el.style.width='var(--card-w)';
+    el.style.overflow='visible';
+    const cardW=getCardPx();
+    const FAN=Math.round(cardW*0.30);
+    const visible=G.waste.slice(-3);
+    const count=visible.length;
+    let html='';
+    for(let i=0;i<count;i++){
+      const c=visible[i];
+      const isTop=(i===count-1);
+      const left=i*FAN; // fan RIGHT: 0, FAN, 2*FAN
+      if(isTop){
+        html+='<div class="card face-up '+clr(c.s)+'" data-src="waste" style="left:'+left+'px;top:0;z-index:'+(i+1)+';"><div class="ci">'+cardInner(c.v,c.s,true)+'</div></div>';
+      } else {
+        html+='<div class="card face-up '+clr(c.s)+' inactive" style="left:'+left+'px;top:0;z-index:'+(i+1)+';"><div class="ci">'+cardInner(c.v,c.s,false)+'</div></div>';
+      }
+    }
+    el.innerHTML=html;
+  }
+}
+
+function rFound(){
+  for(let i=0;i<4;i++){
+    const el=document.getElementById('f'+i);
+    const pile=G.found[i];
+    if(!pile.length){
+      el.innerHTML='<div class="slot-found-empty" data-suit="'+FOUND_SUITS[i]+'" data-tgt="found" data-fi="'+i+'"></div>';
+    } else {
+      el.innerHTML=faceHTML(pile[pile.length-1],'data-src="found" data-fi="'+i+'"');
+    }
+  }
+}
+
+function rTab(){
+  const cardH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-h'))||68;
+  const fu=getFU();
+  const fd=getFD();
+  for(let c=0;c<7;c++){
+    const el=document.getElementById('c'+c);
+    const col=G.tab[c];
+    if(!col.length){
+      el.innerHTML='<div class="slot-empty" data-tgt="col" data-col="'+c+'" style="width:100%;height:var(--card-h);"></div>';
+      el.style.minHeight='var(--card-h)'; continue;
+    }
+    let html='', y=0;
+    for(let i=0;i<col.length;i++){
+      const cd=col[i];
+      const last=(i===col.length-1);
+      if(!cd.u){
+        html+=backHTML('style="top:'+y+'px;"');
+        y+=fd;
+      } else {
+        // Only the top (last) face-up card gets the hero center
+        html+=faceHTML(cd,'data-src="tab" data-col="'+c+'" data-idx="'+i+'" style="top:'+y+'px;"', last);
+        if(!last) y+=fu;
+      }
+    }
+    el.style.minHeight=(y+cardH)+'px';
+    el.innerHTML=html;
+  }
+}
+
+// ══════════════════════════════════════
+// AUTO FOUNDATION
+// ══════════════════════════════════════
+function tryAutoFoundation(card,src,colIdx,cardIdx){
+  const fi=foundIdxForSuit(card.s);
+  if(fi===-1) return false;
+  const pile=G.found[fi];
+  const ok=pile.length===0?card.v==='A':pile[pile.length-1].s===card.s&&vi(pile[pile.length-1].v)+1===vi(card.v);
+  if(!ok) return false;
+  saveHistory();
+  if(src==='waste'){ G.waste.pop(); }
+  else if(src==='tab'){
+    G.tab[colIdx].splice(cardIdx);
+    const col=G.tab[colIdx];
+    if(col.length&&!col[col.length-1].u){col[col.length-1].u=true;G.score+=5;}
+  }
+  G.found[fi].push(card); G.score+=15; G.moves++;
+  renderAll(); checkWin(); return true;
+}
+
+// ══════════════════════════════════════
+// DRAG & DROP + DOUBLE-TAP
+// ══════════════════════════════════════
+let DR={active:false};
+let TAP={key:null,time:0};
+const ghost=document.getElementById('ghost');
+const DRAG_THRESH=8;
+
+function nearestCard(e){let t=e.target;while(t&&!t.classList.contains('card'))t=t.parentElement;return t;}
+function cardKey(src,col,idx,fi){
+  if(src==='waste') return 'waste';
+  if(src==='tab') return 'tab:'+col+':'+idx;
+  if(src==='found') return 'found:'+fi;
+  return null;
+}
+
+function buildGhost(cards){
+  const cardH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-h'))||68;
+  const fu=getFU();
+  ghost.innerHTML='';
+  for(let i=0;i<cards.length;i++){
+    const d=document.createElement('div');
+    d.className='card face-up '+clr(cards[i].s);
+    d.style.top=(i*fu)+'px';
+    d.innerHTML='<div class="ci">'+cardInner(cards[i].v,cards[i].s,true)+'</div>';
+    ghost.appendChild(d);
+  }
+  ghost.style.height=((cards.length-1)*fu+cardH)+'px';
+}
+
+document.addEventListener('pointerdown',function(e){
+  if(e.button&&e.button!==0) return;
+  const cd=nearestCard(e);
+  if(!cd) return;
+  const src=cd.dataset.src;
+  if(!src) return;
+  e.preventDefault();
+
+  // Stock tap
+  if(src==='stock'){
+    saveHistory();
+    if(!G.stock.length){
+      G.stock=G.waste.slice().reverse().map(function(c){return Object.assign({},c,{u:false});});
+      G.waste=[]; G.score=Math.max(0,G.score-(DRAW===3?50:100));
+    } else {
+      const toDraw=Math.min(DRAW,G.stock.length);
+      for(let i=0;i<toDraw;i++){const c=G.stock.pop();c.u=true;G.waste.push(c);}
+      G.score+=5; G.moves++;
+    }
+    TAP={key:null,time:0};
+    renderAll(); return;
+  }
+
+  if(cd.classList.contains('inactive')) return;
+  if(cd.classList.contains('face-down')) return;
+
+  let cards=[];
+  if(src==='waste'){
+    if(!G.waste.length) return;
+    cards=[G.waste[G.waste.length-1]];
+  } else if(src==='found'){
+    const fi=+cd.dataset.fi;
+    if(!G.found[fi].length) return;
+    cards=[G.found[fi][G.found[fi].length-1]];
+  } else if(src==='tab'){
+    const col=G.tab[+cd.dataset.col];
+    const idx=+cd.dataset.idx;
+    cards=col.slice(idx);
+    if(cards.some(function(c){return !c.u;})) return;
+  }
+  if(!cards.length) return;
+
+  const rect=cd.getBoundingClientRect();
+  buildGhost(cards);
+  ghost.style.left=rect.left+'px';
+  ghost.style.top=rect.top+'px';
+
+  DR={
+    active:true, cards:cards, src:src,
+    col:cd.dataset.col!==undefined?+cd.dataset.col:null,
+    idx:cd.dataset.idx!==undefined?+cd.dataset.idx:null,
+    fi:cd.dataset.fi!==undefined?+cd.dataset.fi:null,
+    ox:e.clientX-rect.left, oy:e.clientY-rect.top,
+    startX:e.clientX, startY:e.clientY,
+    dragging:false,
+    key:cardKey(src,
+      cd.dataset.col!==undefined?+cd.dataset.col:null,
+      cd.dataset.idx!==undefined?+cd.dataset.idx:null,
+      cd.dataset.fi!==undefined?+cd.dataset.fi:null)
+  };
+  try{e.setPointerCapture(e.pointerId);}catch(_){}
+},{passive:false});
+
+document.addEventListener('pointermove',function(e){
+  if(!DR.active) return;
+  e.preventDefault();
+  const dx=e.clientX-DR.startX, dy=e.clientY-DR.startY;
+  if(!DR.dragging&&(Math.abs(dx)>DRAG_THRESH||Math.abs(dy)>DRAG_THRESH)){
+    DR.dragging=true; ghost.style.display='block';
+  }
+  if(DR.dragging){
+    ghost.style.left=(e.clientX-DR.ox)+'px';
+    ghost.style.top=(e.clientY-DR.oy)+'px';
+  }
+},{passive:false});
+
+document.addEventListener('pointerup',function(e){
+  if(!DR.active) return;
+  e.preventDefault();
+  ghost.style.display='none';
+  const now=Date.now();
+  const wasTap=!DR.dragging;
+
+  if(wasTap){
+    const isDoubleTap=(now-TAP.time<600)&&(TAP.key===DR.key);
+    TAP={key:DR.key,time:now};
+    if(isDoubleTap){
+      TAP={key:null,time:0};
+      const src=DR.src, ci=DR.col, idx=DR.idx;
+      let card=null;
+      if(src==='waste'&&G.waste.length){
+        card=G.waste[G.waste.length-1];
+      } else if(src==='found'&&DR.fi!==null&&G.found[DR.fi].length){
+        card=G.found[DR.fi][G.found[DR.fi].length-1];
+      } else if(src==='tab'&&ci!==null){
+        const col=G.tab[ci];
+        if(idx!==null&&idx===col.length-1) card=col[idx];
+      }
+      DR.active=false;
+      if(card) tryAutoFoundation(card,src,ci,idx);
+      else renderAll();
+      return;
+    }
+    DR.active=false; return;
+  }
+
+  // Drag drop
+  TAP={key:null,time:0};
+  const underEl=document.elementFromPoint(e.clientX,e.clientY);
+  let dropped=false;
+  if(underEl){
+    for(let i=0;i<4;i++){
+      const f=document.getElementById('f'+i);
+      if(f&&f.contains(underEl)){dropped=dropFound(i);break;}
+    }
+    if(!dropped){
+      for(let c=0;c<7;c++){
+        const col=document.getElementById('c'+c);
+        if(col&&col.contains(underEl)){dropped=dropTab(c);break;}
+      }
+    }
+  }
+  DR.active=false;
+  if(dropped){renderAll();checkWin();}
+},{passive:false});
+
+document.addEventListener('pointercancel',function(){
+  if(!DR.active) return;
+  DR.active=false; ghost.style.display='none';
+});
+
+function removeFromSrc(){
+  if(DR.src==='waste'){G.waste.pop();}
+  else if(DR.src==='found'){G.found[DR.fi].pop();}
+  else if(DR.src==='tab'){
+    G.tab[DR.col].splice(DR.idx);
+    const col=G.tab[DR.col];
+    if(col.length&&!col[col.length-1].u){col[col.length-1].u=true;G.score+=5;}
+  }
+}
+
+function dropFound(fi){
+  if(DR.cards.length!==1) return false;
+  const c=DR.cards[0], pile=G.found[fi];
+  if(FOUND_SUITS[fi]!==c.s) return false;
+  const ok=pile.length===0?c.v==='A':pile[pile.length-1].s===c.s&&vi(pile[pile.length-1].v)+1===vi(c.v);
+  if(!ok) return false;
+  saveHistory(); removeFromSrc(); G.found[fi].push(c); G.score+=15; G.moves++;
+  return true;
+}
+
+function dropTab(ci){
+  const col=G.tab[ci], c=DR.cards[0];
+  const ok=col.length===0?c.v==='K':(col[col.length-1].u&&isRed(c.s)!==isRed(col[col.length-1].s)&&vi(col[col.length-1].v)-1===vi(c.v));
+  if(!ok) return false;
+  saveHistory(); removeFromSrc(); G.tab[ci].push.apply(G.tab[ci],DR.cards); G.score+=5; G.moves++;
+  return true;
+}
+
+// ══════════════════════════════════════
+// WIN
+// ══════════════════════════════════════
+function checkWin(){
+  if(G.found.reduce(function(s,p){return s+p.length;},0)===52){
+    clearInterval(timer);
+    document.getElementById('autocomplete-btn').classList.remove('visible');
+    document.getElementById('ws').textContent=G.score;
+    document.getElementById('wm').textContent=G.moves;
+    setTimeout(launchWinAnimation, 400);
+  }
+}
+
+// Can auto-complete when: stock empty, waste empty or only face-up, all tableau cards face-up
+function canAutoComplete(){
+  if(G.stock.length > 0) return false;
+  var allUp = G.tab.every(function(col){
+    return col.every(function(c){ return c.u; });
   });
+  return allUp;
+}
 
-  function initializeDragAndDrop() {
-    // Make face-up cards in tableau draggable
-    var cards = document.querySelectorAll('.tab .card.up');
-    cards.forEach(function(card) {
-      card.setAttribute('draggable', true);
-      card.addEventListener('dragstart', handleDragStart, false);
-      card.addEventListener('dragend', handleDragEnd, false);
-    });
-    // Make top card in waste pile draggable
-    var wasteCard = document.querySelector('#waste .card.up');
-    if (wasteCard) {
-      wasteCard.setAttribute('draggable', true);
-      wasteCard.addEventListener('dragstart', handleDragStart, false);
-      wasteCard.addEventListener('dragend', handleDragEnd, false);
-    }
-    // Make piles droppable
-    var piles = document.querySelectorAll('.pile');
-    piles.forEach(function(pile) {
-      pile.addEventListener('dragover', handleDragOver, false);
-      pile.addEventListener('drop', handleDrop, false);
-      pile.addEventListener('dragenter', handleDragEnter, false);
-      pile.addEventListener('dragleave', handleDragLeave, false);
-    });
-    // Make foundation piles droppable
-    var foundations = document.querySelectorAll('#fnd .pile');
-    foundations.forEach(function(foundation) {
-      foundation.addEventListener('dragover', handleDragOver, false);
-      foundation.addEventListener('drop', handleDrop, false);
-      foundation.addEventListener('dragenter', handleDragEnter, false);
-      foundation.addEventListener('dragleave', handleDragLeave, false);
-    });
+function checkAutoCompleteButton(){
+  var btn = document.getElementById('autocomplete-btn');
+  if(canAutoComplete() && G.found.reduce(function(s,p){return s+p.length;},0) < 52){
+    btn.classList.add('visible');
+  } else {
+    btn.classList.remove('visible');
   }
+}
 
-  // Helper to get pile index from a card element
-  function getPileIndexFromCard(cardEl) {
-    // Only works for tableau piles (data-pile 1-7)
-    return Number(cardEl.closest('.pile').dataset.pile);
-  }
-
-  // Helper to get card index within its pile
-  function getCardIndexInPile(cardEl) {
-    const pileEl = cardEl.closest('.pile');
-    const cards = Array.from(pileEl.querySelectorAll('.card.up'));
-    return cards.indexOf(cardEl);
-  }
-
-  function handleDragStart(e) {
-    if (!e.target.classList.contains('up')) {
-      e.preventDefault();
-      return false;
+var acTimer = null;
+function runAutoComplete(){
+  document.getElementById('autocomplete-btn').classList.remove('visible');
+  // Collect all remaining cards: waste then tableau, sorted by value ascending
+  function step(){
+    // Try to move any card to foundation
+    var moved = false;
+    // Try waste first
+    if(G.waste.length){
+      var c = G.waste[G.waste.length-1];
+      if(tryAutoFoundation(c,'waste',null,null)) { moved=true; }
     }
-    
-    isDragging = true;
-    dragSrcEl = e.target;
-    
-    // Get source pile
-    const pileIndex = getPileIndexFromCard(e.target);
-    let pileArr;
-    let isWaste = false;
-    if (e.target.closest('#waste')) {
-      pileArr = table['waste'];
-      isWaste = true;
-    } else {
-      pileArr = table['tab'][pileIndex];
-    }
-    // Find the index of the dragged card in the data array
-    const rank = e.target.dataset.rank;
-    const suit = e.target.dataset.suit;
-    const cardIndex = pileArr.findIndex(card => card[0] === rank && card[1] === suit);
-    if (cardIndex === -1) {
-      e.preventDefault();
-      return false;
-    }
-    // Only allow dragging if the card is face-up
-    const pileEl = e.target.closest('.pile');
-    const upCards = Array.from(pileEl.querySelectorAll('.card.up'));
-    const upCardIndices = upCards.map(cardEl => {
-      const r = cardEl.dataset.rank;
-      const s = cardEl.dataset.suit;
-      return pileArr.findIndex(card => card[0] === r && card[1] === s);
-    });
-    if (!upCardIndices.includes(cardIndex)) {
-      e.preventDefault();
-      return false;
-    }
-    // Waste pile: only allow dragging the top card
-    if (isWaste) {
-      if (cardIndex !== pileArr.length - 1) {
-        e.preventDefault();
-        return false;
-      }
-    }
-    // Store drag data for stack movement
-    dragData = {
-      pileIndex,
-      cardIndex,
-      stack: isWaste ? [pileArr[cardIndex]] : pileArr.slice(cardIndex)
-    };
-    // Set up the same state as click system
-    const card = [rank, suit];
-    e.target.dataset.selected = 'true';
-    $table.dataset.move = 'true';
-    $table.dataset.selected = card;
-    $table.dataset.source = pileIndex;
-    // --- Custom drag image for stack (improved) ---
-    // Waste: only show the top card
-    let stackEls;
-    if (isWaste) {
-      stackEls = [e.target];
-    } else {
-      // Tableau: show stack from dragged card down, top card first
-      const allCardsInPile = Array.from(pileEl.querySelectorAll('.card.up'));
-      const dragCardIdx = allCardsInPile.indexOf(e.target);
-      stackEls = allCardsInPile.slice(dragCardIdx);
-    }
-    // Create a container for the drag image
-    const dragImage = document.createElement('div');
-    dragImage.style.position = 'absolute';
-    dragImage.style.pointerEvents = 'none';
-    dragImage.style.zIndex = '9999';
-    dragImage.style.top = '-1000px'; // offscreen
-    dragImage.style.left = '-1000px';
-    dragImage.style.background = 'none';
-    dragImage.style.border = 'none';
-    dragImage.style.opacity = '1';
-    // Stack the cards visually, copying computed styles
-    // For tableau: offset each card downward and layer above the previous, so the drag image matches the tableau
-    const stackElsForImage = stackEls;
-    // Calculate pixel offset based on the real offset between stacked cards in the tableau
-    let realOffsetPx = 0;
-    if (!isWaste && stackElsForImage.length > 1) {
-      const first = stackElsForImage[0];
-      const second = stackElsForImage[1];
-      const firstTop = first.getBoundingClientRect().top;
-      const secondTop = second.getBoundingClientRect().top;
-      realOffsetPx = Math.abs(secondTop - firstTop);
-    } else if (stackElsForImage.length > 0) {
-      // Fallback: use 15.5em converted to px based on card's font size
-      const fontSize = parseFloat(window.getComputedStyle(stackElsForImage[0]).fontSize) || 16;
-      realOffsetPx = 15.5 * fontSize;
-    } else {
-      realOffsetPx = 50; // fallback
-    }
-    stackElsForImage.forEach((cardEl, i) => {
-      const clone = cardEl.cloneNode(true);
-      const computed = window.getComputedStyle(cardEl);
-      clone.style.width = computed.width;
-      clone.style.height = computed.height;
-      clone.style.background = computed.background;
-      clone.style.backgroundColor = computed.backgroundColor;
-      clone.style.border = computed.border;
-      clone.style.borderRadius = computed.borderRadius;
-      clone.style.boxShadow = computed.boxShadow;
-      clone.style.position = 'absolute';
-      clone.style.top = `${i * realOffsetPx}px`;
-      clone.style.left = '0px';
-      clone.style.opacity = '1';
-      clone.style.pointerEvents = 'none';
-      clone.style.zIndex = (i + 1).toString(); // Each next card is above the previous
-      dragImage.appendChild(clone);
-    });
-    document.body.appendChild(dragImage);
-    currentDragImage = dragImage;
-    // Set drag image (offset so mouse is on the top card)
-    e.dataTransfer.setDragImage(dragImage, 20, 20);
-    // --- End custom drag image ---
-
-    e.target.style.opacity = '0.4';
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', ''); // Required for Firefox
-  }
-
-  function handleDragOver(e) {
-    if (e.preventDefault) {
-      e.preventDefault();
-    }
-    e.dataTransfer.dropEffect = 'move';
-    return false;
-  }
-
-  function handleDragEnter(e) {
-    if (e.target.classList.contains('pile') || e.target.closest('.pile')) {
-      var pile = e.target.closest('.pile');
-      pile.classList.add('drag-over');
-      
-      // Check if this would be a valid drop
-      if (isDragging && dragData) {
-        var destPile = pile.dataset.pile;
-        var selectedCard = dragData.stack[0];
-        var destCard = null;
-        
-        // Check if dropping on a card
-        var pileCards = pile.querySelectorAll('.card.up');
-        if (pileCards.length > 0) {
-          var topCard = pileCards[pileCards.length - 1];
-          destCard = [topCard.dataset.rank, topCard.dataset.suit];
-        }
-        
-        var validationTarget = destCard || destPile;
-        var isValid = false;
-        if (typeof validateMove === 'function') {
-          isValid = validateMove(selectedCard, validationTarget, destPile);
-        }
-        
-        if (isValid) {
-          pile.classList.add('valid-drop');
-        } else {
-          pile.classList.add('invalid-drop');
+    // Try each tableau column top card
+    if(!moved){
+      for(var ci=0;ci<7;ci++){
+        var col = G.tab[ci];
+        if(col.length){
+          var c = col[col.length-1];
+          if(tryAutoFoundation(c,'tab',ci,col.length-1)){ moved=true; break; }
         }
       }
     }
-  }
-
-  function handleDragLeave(e) {
-    if (e.target.classList.contains('pile') || e.target.closest('.pile')) {
-      var pile = e.target.closest('.pile');
-      pile.classList.remove('drag-over', 'valid-drop', 'invalid-drop');
-    }
-  }
-
-  function clearSelectionAndMoveState() {
-    // Remove data-selected from all cards
-    document.querySelectorAll('.card[data-selected]').forEach(card => {
-      delete card.dataset.selected;
-    });
-    // Remove move state from table
-    var table = document.querySelector('#table');
-    if (table) {
-      delete table.dataset.move;
-      delete table.dataset.selected;
-      delete table.dataset.source;
-      delete table.dataset.dest;
-    }
-  }
-
-  function handleDrop(e) {
-    // Defensive: check dragData
-    if (!dragData || !dragData.stack) {
-      clearSelectionAndMoveState();
-      return false;
-    }
-    // Find destination pile
-    const targetPileEl = e.target.closest('.pile');
-    if (!targetPileEl) {
-      clearSelectionAndMoveState();
-      return false;
-    }
-    const destPileIndex = Number(targetPileEl.dataset.pile);
-    const destPileName = targetPileEl.dataset.pile;
-    $table.dataset.dest = destPileIndex;
-
-    // Check if this is a foundation pile (not a number)
-    let destPileArr;
-    const isFoundation = isNaN(destPileIndex);
-    if (isFoundation) {
-      if (!table[destPileName]) table[destPileName] = [];
-      destPileArr = table[destPileName];
-    } else {
-      destPileArr = table['tab'][destPileIndex];
-    }
-
-    let destCard = null;
-    if (destPileArr && destPileArr.length > 0) {
-      destCard = destPileArr[destPileArr.length - 1]; // Only [rank, suit]
-    }
-    // Use only [rank, suit] for validation
-    const selectedCard = dragData.stack[0];
-    let valid = false;
-    // Use the same logic as double-click for foundation moves
-    if (isFoundation) {
-      valid = validateMove(selectedCard, destPileName, destPileName);
-    } else if (destCard) {
-      valid = validateMove(selectedCard, destCard, destPileName);
-    } else {
-      valid = validateMove(selectedCard, destPileIndex, destPileName);
-    }
-    if (valid) {
-      if (typeof pushUndoState === 'function') pushUndoState();
-      let stack;
-      if (isFoundation) {
-        // Only move the top card for foundation
-        if (dragSrcEl && dragSrcEl.closest('#waste')) {
-          stack = table['waste'].splice(dragData.cardIndex, 1);
-        } else {
-          stack = [table['tab'][dragData.pileIndex].splice(dragData.cardIndex, 1)[0]];
-        }
-        table[destPileName].push(...stack);
-      } else {
-        if (dragSrcEl && dragSrcEl.closest('#waste')) {
-          stack = table['waste'].splice(dragData.cardIndex, 1);
-        } else {
-          stack = table['tab'][dragData.pileIndex].splice(dragData.cardIndex);
-        }
-        table['tab'][destPileIndex].push(...stack);
-      }
-      render(table, playedCards);
-    }
-    clearSelectionAndMoveState();
-    return false;
-  }
-
-  function handleDragEnd(e) {
-    isDragging = false;
-    dragSrcEl = null;
-    dragData = null;
-    e.target.style.opacity = '1';
-    document.querySelectorAll('.pile').forEach(pile => {
-      pile.classList.remove('drag-over', 'valid-drop', 'invalid-drop');
-    });
-    clearSelectionAndMoveState();
-    // Remove the drag image if it exists
-    if (currentDragImage && currentDragImage.parentNode) {
-      currentDragImage.parentNode.removeChild(currentDragImage);
-      currentDragImage = null;
-    }
-    // Re-bind all events and restore stock pile functionality
-    if (typeof play === 'function') play(table);
-  }
-
-  // Re-initialize drag and drop when cards are updated
-  function updateDragAndDrop() {
-    // Remove existing drag listeners
-    var cards = document.querySelectorAll('.card[draggable="true"]');
-    cards.forEach(function(card) {
-      card.removeEventListener('dragstart', handleDragStart);
-      card.removeEventListener('dragend', handleDragEnd);
-      card.removeAttribute('draggable');
-    });
-
-    // Re-initialize after a short delay
-    setTimeout(initializeDragAndDrop, 50);
-  }
-
-  // Override the render function to update drag and drop
-  var originalRender = window.render;
-  if (originalRender) {
-    window.render = function(table, playedCards) {
-      originalRender(table, playedCards);
-      updateDragAndDrop();
-    };
-  }
-
-  // 1. Ensure mobile drag-and-drop (touch events) is always enabled and re-bound after render
-  function enableMobileDragAndDrop() {
-    if (!('ontouchstart' in window)) return;
-    let touchDragImage = null;
-    let touchStartTarget = null;
-
-    function onTouchStart(e) {
-      if (!e.target.classList.contains('up')) return;
-      touchStartTarget = e.target;
-      handleDragStart({
-        target: e.target,
-        preventDefault: () => {},
-        dataTransfer: {
-          setData: () => {},
-          effectAllowed: 'move',
-          setDragImage: () => {}
-        }
-      });
-      touchDragImage = currentDragImage;
-      if (touchDragImage) {
-        touchDragImage.style.display = 'block';
-        touchDragImage.style.pointerEvents = 'none';
-      }
-      document.body.appendChild(touchDragImage);
-    }
-
-    function onTouchMove(e) {
-      if (!touchDragImage) return;
-      const touch = e.touches[0];
-      touchDragImage.style.left = (touch.clientX - 20) + 'px';
-      touchDragImage.style.top = (touch.clientY - 20) + 'px';
-      e.preventDefault();
-    }
-
-    function onTouchEnd(e) {
-      if (!touchDragImage) return;
-      const touch = e.changedTouches[0];
-      const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-      if (dropTarget) {
-        handleDrop({
-          target: dropTarget,
-          preventDefault: () => {},
-          dataTransfer: null
-        });
-      }
-      if (touchDragImage && touchDragImage.parentNode) {
-        touchDragImage.parentNode.removeChild(touchDragImage);
-      }
-      touchDragImage = null;
-      handleDragEnd({ target: touchStartTarget });
-      touchStartTarget = null;
-    }
-
-    function bindTouchListeners() {
-      document.querySelectorAll('.card.up').forEach(card => {
-        card.removeEventListener('touchstart', onTouchStart);
-        card.removeEventListener('touchmove', onTouchMove);
-        card.removeEventListener('touchend', onTouchEnd);
-        card.addEventListener('touchstart', onTouchStart, { passive: false });
-        card.addEventListener('touchmove', onTouchMove, { passive: false });
-        card.addEventListener('touchend', onTouchEnd, { passive: false });
-      });
-    }
-    // Always re-bind after render
-    var originalRender = window.render;
-    if (originalRender) {
-      window.render = function(table, playedCards) {
-        originalRender(table, playedCards);
-        bindTouchListeners();
-      };
-    } else {
-      bindTouchListeners();
-    }
-  }
-  enableMobileDragAndDrop();
-
-  // 2. Refactor #score area to use flexbox for perfect alignment of the reset button
-  const scoreDiv = document.querySelector('#score');
-  if (scoreDiv) {
-    scoreDiv.style.display = 'flex';
-    scoreDiv.style.alignItems = 'center';
-    scoreDiv.style.justifyContent = 'space-between';
-    scoreDiv.style.flexWrap = 'wrap';
-    scoreDiv.style.gap = '0.5em';
-    // Find or create the reset button
-    let resetBtn = document.getElementById('reset-btn');
-    if (!resetBtn) {
-      resetBtn = document.createElement('button');
-      resetBtn.id = 'reset-btn';
-      scoreDiv.appendChild(resetBtn);
-    }
-    resetBtn.textContent = '⟳ Reset';
-    resetBtn.style.padding = '0.5em 1.2em';
-    resetBtn.style.fontSize = '1.1em';
-    resetBtn.style.background = 'linear-gradient(180deg, #fff 0%, #e0e0e0 100%)';
-    resetBtn.style.border = '1px solid #bbb';
-    resetBtn.style.borderRadius = '8px';
-    resetBtn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
-    resetBtn.style.cursor = 'pointer';
-    resetBtn.style.fontWeight = 'bold';
-    resetBtn.style.color = '#222';
-    resetBtn.style.margin = '0 0 0 1em';
-    resetBtn.onmouseover = function() { resetBtn.style.background = '#f5f5f5'; };
-    resetBtn.onmouseout = function() { resetBtn.style.background = 'linear-gradient(180deg, #fff 0%, #e0e0e0 100%)'; };
-    resetBtn.onclick = function() { location.reload(); };
-    // Responsive: full width on small screens
-    resetBtn.style.flexShrink = '0';
-    resetBtn.style.minWidth = '100px';
-
-    // Add Undo button
-    let undoBtn = document.getElementById('undo-btn');
-    // Create a button row container if not present
-    let buttonRow = document.querySelector('#score .button-row');
-    if (!buttonRow) {
-      buttonRow = document.createElement('div');
-      buttonRow.className = 'button-row';
-      // Place button row as the last child of #score
-      scoreDiv.appendChild(buttonRow);
-    }
-    // Always create or move Reset and Undo buttons into the button row
-    buttonRow.appendChild(resetBtn);
-    if (!undoBtn) {
-      undoBtn = document.createElement('button');
-      undoBtn.id = 'undo-btn';
-      undoBtn.textContent = '↶ Undo';
-    }
-    buttonRow.appendChild(undoBtn);
-    // Disable Undo if stack is empty
-    function updateUndoButtonState() {
-      if (window.undoStack && window.undoStack.length > 0) {
-        undoBtn.disabled = false;
-        undoBtn.style.opacity = '1';
-        undoBtn.style.pointerEvents = 'auto';
-      } else {
-        undoBtn.disabled = true;
-        undoBtn.style.opacity = '0.5';
-        undoBtn.style.pointerEvents = 'none';
+    if(moved){
+      renderAll();
+      checkWin();
+      if(G.found.reduce(function(s,p){return s+p.length;},0) < 52){
+        acTimer = setTimeout(step, 80);
       }
     }
-    undoBtn.onclick = function() { if (window.undoMove) { window.undoMove(); updateUndoButtonState(); } };
-    window.updateUndoButtonState = updateUndoButtonState;
-    // Call after every render
-    var origRender = window.render;
-    window.render = function(table, playedCards) {
-      origRender(table, playedCards);
-      updateUndoButtonState();
-    };
-    updateUndoButtonState();
-
-    // Responsive: stack on mobile
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media (max-width: 600px) {
-        #score { flex-direction: column; align-items: stretch; }
-        #reset-btn { margin: 0.5em 0 0 0; width: 100%; min-width: 0; }
-      }
-    `;
-    document.head.appendChild(style);
   }
+  step();
+}
 
-  // Mobile card overlap: increase vertical offset for stacked cards
-  function getCardOffset() {
-    return window.innerWidth <= 600 ? 5 : 3; // 5em for mobile, 3em for desktop
+// ── MICROSOFT-STYLE WIN ANIMATION ──
+function launchWinAnimation(){
+  document.getElementById('win').classList.add('show');
+  var container = document.getElementById('win-cards');
+  container.innerHTML = '';
+  var suits = ['♠','♥','♦','♣'];
+  var vals  = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+  var cardW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-w')) ||
+              (window.innerWidth - 46)/7;
+  var W = window.innerWidth, H = window.innerHeight;
+  // Launch cards one at a time from the foundation positions
+  var delay = 0;
+  for(var s=0;s<4;s++){
+    for(var v=0;v<13;v++){
+      (function(suit,val,d){
+        setTimeout(function(){
+          var el = document.createElement('div');
+          var isRed = suit==='♥'||suit==='♦';
+          el.className = 'win-card ' + (isRed?'red-c':'black-c');
+          el.textContent = val + suit;
+          // Start from ~foundation area (top-right)
+          var startX = W * 0.55 + (s * (cardW+4));
+          var startY = 40;
+          el.style.cssText = 'left:'+startX+'px;top:'+startY+'px;';
+          container.appendChild(el);
+          // Animate: give it velocity, bounce off bottom
+          var x = startX, y = startY;
+          var vx = (Math.random()-0.5)*18 + (Math.random()>0.5?6:-6);
+          var vy = -(Math.random()*12+8);
+          var gravity = 0.7;
+          function tick(){
+            vy += gravity;
+            x += vx; y += vy;
+            // Bounce off bottom — full energy restore = endless bouncing
+            if(y + 90 > H){
+              y = H - 90;
+              vy = -(Math.abs(vy) * 0.98 + 0.5); // near-perfect restitution + tiny boost
+              vx *= 0.995;
+            }
+            // Bounce off sides
+            if(x < 0){ x=0; vx=Math.abs(vx)*0.99; }
+            if(x + cardW > W){ x=W-cardW; vx=-Math.abs(vx)*0.99; }
+            el.style.left = x+'px';
+            el.style.top  = y+'px';
+            requestAnimationFrame(tick); // run forever until new game
+          }
+          requestAnimationFrame(tick);
+        }, d);
+      })(suits[s], vals[v], delay);
+      delay += 60;
+    }
   }
+}
 
-  // After initializing undoStack and after the first pushUndoState in the game setup, call updateUndoButtonState() to ensure Undo is disabled at game start.
-  if (window.updateUndoButtonState) window.updateUndoButtonState();
+// ══════════════════════════════════════
+// CONTROLS
+// ══════════════════════════════════════
+document.getElementById('undo-btn').addEventListener('click',function(){if(history.length){G=history.pop();renderAll();}});
+document.getElementById('autocomplete-btn').addEventListener('click',runAutoComplete);
+document.getElementById('new-btn').addEventListener('click',initGame);
+document.getElementById('win-btn').addEventListener('click',initGame);
+
+document.querySelectorAll('.t-btn[data-th]').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    document.documentElement.setAttribute('data-theme',btn.dataset.th);
+    document.querySelectorAll('.t-btn[data-th]').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.draw-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    DRAW=+btn.dataset.draw;
+    document.querySelectorAll('.draw-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    initGame();
+  });
+});
+
+// ══════════════════════════════════════
+// HAMBURGER MENU
+// ══════════════════════════════════════
+(function(){
+  var btn = document.getElementById('menu-btn');
+  var drawer = document.getElementById('menu-drawer');
+  var overlay = document.getElementById('menu-overlay');
+  function openMenu(){ drawer.classList.add('open'); overlay.classList.add('open'); }
+  function closeMenu(){ drawer.classList.remove('open'); overlay.classList.remove('open'); }
+  btn.addEventListener('click', openMenu);
+  overlay.addEventListener('click', closeMenu);
+  // Close drawer when a button inside it is clicked
+  drawer.addEventListener('click', function(e){
+    if(e.target.classList.contains('t-btn')) setTimeout(closeMenu, 150);
+  });
+})();
+
+// ══════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════
+initGame();
 </script>
-
-
-  
 </body>
 </html>
