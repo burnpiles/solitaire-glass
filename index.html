@@ -216,6 +216,7 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
 
 /* Drop highlight */
 .drop-hl{outline:2px solid var(--drop-c)!important;outline-offset:-1px;box-shadow:0 0 12px var(--drop-g),var(--card-shad)!important;}
+.card.selected{outline:3px solid var(--drop-c)!important;outline-offset:-2px;box-shadow:0 0 18px var(--drop-g),0 0 0 3px var(--drop-c)!important;transform:translateY(-4px);transition:transform 0.1s;}
 
 /* ─── TABLEAU ─── */
 #tableau{display:flex;gap:var(--gap);align-items:flex-start;}
@@ -395,6 +396,7 @@ function initGame(){
   document.getElementById('win').classList.remove('show');
   document.getElementById('win-cards').innerHTML='';
   document.getElementById('autocomplete-btn').classList.remove('visible');
+  clearSelection();
 }
 
 function updateTimer(){
@@ -566,12 +568,13 @@ function tryAutoFoundation(card,src,colIdx,cardIdx){
 }
 
 // ══════════════════════════════════════
-// DRAG & DROP + DOUBLE-TAP
+// DRAG & DROP + TAP-TO-SELECT + DOUBLE-TAP
 // ══════════════════════════════════════
 let DR={active:false};
 let TAP={key:null,time:0};
+let SEL=null; // selected card for tap-tap mode: {cards,src,col,idx,fi,el}
 const ghost=document.getElementById('ghost');
-const DRAG_THRESH=8;
+const DRAG_THRESH=10;
 
 function nearestCard(e){let t=e.target;while(t&&!t.classList.contains('card'))t=t.parentElement;return t;}
 function cardKey(src,col,idx,fi){
@@ -595,6 +598,37 @@ function buildGhost(cards){
   ghost.style.height=((cards.length-1)*fu+cardH)+'px';
 }
 
+function clearSelection(){
+  if(SEL&&SEL.el){SEL.el.classList.remove('selected');}
+  SEL=null;
+}
+
+// Find best drop target using generous overlap — center of ghost card vs all targets
+function findDropTarget(cx,cy){
+  const cardW=getCardPx(), cardH=cardW*1.45;
+  const SLOP=cardW*0.9; // very generous hit zone = 90% of card width in any direction
+
+  // Check foundations first
+  for(let i=0;i<4;i++){
+    const f=document.getElementById('f'+i);
+    if(!f) continue;
+    const r=f.getBoundingClientRect();
+    const fc=r.left+r.width/2, fr=r.top+r.height/2;
+    if(Math.abs(cx-fc)<SLOP&&Math.abs(cy-fr)<SLOP) return {type:'found',fi:i};
+  }
+  // Check tableau columns — check against the TOP CARD rect, with extra vertical slop
+  for(let c=0;c<7;c++){
+    const col=document.getElementById('c'+c);
+    if(!col) continue;
+    const r=col.getBoundingClientRect();
+    // Horizontal must overlap column, vertical anywhere in column
+    if(cx>=r.left-SLOP*0.5 && cx<=r.right+SLOP*0.5 && cy>=r.top-SLOP && cy<=r.bottom+SLOP){
+      return {type:'tab',ci:c};
+    }
+  }
+  return null;
+}
+
 document.addEventListener('pointerdown',function(e){
   if(e.button&&e.button!==0) return;
   const cd=nearestCard(e);
@@ -605,6 +639,7 @@ document.addEventListener('pointerdown',function(e){
 
   // Stock tap
   if(src==='stock'){
+    clearSelection();
     saveHistory();
     if(!G.stock.length){
       G.stock=G.waste.slice().reverse().map(function(c){return Object.assign({},c,{u:false});});
@@ -621,39 +656,44 @@ document.addEventListener('pointerdown',function(e){
   if(cd.classList.contains('inactive')) return;
   if(cd.classList.contains('face-down')) return;
 
-  let cards=[];
+  // Build card list for DRAG (full stack from tapped card down)
+  let dragCards=[];
   if(src==='waste'){
     if(!G.waste.length) return;
-    cards=[G.waste[G.waste.length-1]];
+    dragCards=[G.waste[G.waste.length-1]];
   } else if(src==='found'){
     const fi=+cd.dataset.fi;
     if(!G.found[fi].length) return;
-    cards=[G.found[fi][G.found[fi].length-1]];
+    dragCards=[G.found[fi][G.found[fi].length-1]];
   } else if(src==='tab'){
     const col=G.tab[+cd.dataset.col];
     const idx=+cd.dataset.idx;
-    cards=col.slice(idx);
-    if(cards.some(function(c){return !c.u;})) return;
+    dragCards=col.slice(idx);
+    if(dragCards.some(function(c){return !c.u;})) return;
   }
-  if(!cards.length) return;
+  if(!dragCards.length) return;
+
+  // Single card for tap-select (just the tapped card, not the full stack)
+  let tapCard=dragCards[0]; // single card = just top of selection
 
   const rect=cd.getBoundingClientRect();
-  buildGhost(cards);
+  buildGhost(dragCards);
   ghost.style.left=rect.left+'px';
   ghost.style.top=rect.top+'px';
 
+  const key=cardKey(src,
+    cd.dataset.col!==undefined?+cd.dataset.col:null,
+    cd.dataset.idx!==undefined?+cd.dataset.idx:null,
+    cd.dataset.fi!==undefined?+cd.dataset.fi:null);
+
   DR={
-    active:true, cards:cards, src:src,
+    active:true, cards:dragCards, tapCard:tapCard, src:src,
     col:cd.dataset.col!==undefined?+cd.dataset.col:null,
     idx:cd.dataset.idx!==undefined?+cd.dataset.idx:null,
     fi:cd.dataset.fi!==undefined?+cd.dataset.fi:null,
     ox:e.clientX-rect.left, oy:e.clientY-rect.top,
     startX:e.clientX, startY:e.clientY,
-    dragging:false,
-    key:cardKey(src,
-      cd.dataset.col!==undefined?+cd.dataset.col:null,
-      cd.dataset.idx!==undefined?+cd.dataset.idx:null,
-      cd.dataset.fi!==undefined?+cd.dataset.fi:null)
+    dragging:false, el:cd, key:key
   };
   try{e.setPointerCapture(e.pointerId);}catch(_){}
 },{passive:false});
@@ -663,7 +703,10 @@ document.addEventListener('pointermove',function(e){
   e.preventDefault();
   const dx=e.clientX-DR.startX, dy=e.clientY-DR.startY;
   if(!DR.dragging&&(Math.abs(dx)>DRAG_THRESH||Math.abs(dy)>DRAG_THRESH)){
-    DR.dragging=true; ghost.style.display='block';
+    DR.dragging=true;
+    ghost.style.display='block';
+    // Clear tap selection when drag starts
+    clearSelection();
   }
   if(DR.dragging){
     ghost.style.left=(e.clientX-DR.ox)+'px';
@@ -679,41 +722,92 @@ document.addEventListener('pointerup',function(e){
   const wasTap=!DR.dragging;
 
   if(wasTap){
+    // ── Double-tap → auto-foundation ──
     const isDoubleTap=(now-TAP.time<600)&&(TAP.key===DR.key);
     TAP={key:DR.key,time:now};
     if(isDoubleTap){
       TAP={key:null,time:0};
+      clearSelection();
       const src=DR.src, ci=DR.col, idx=DR.idx;
       let card=null;
-      if(src==='waste'&&G.waste.length){
-        card=G.waste[G.waste.length-1];
-      } else if(src==='found'&&DR.fi!==null&&G.found[DR.fi].length){
-        card=G.found[DR.fi][G.found[DR.fi].length-1];
-      } else if(src==='tab'&&ci!==null){
-        const col=G.tab[ci];
-        if(idx!==null&&idx===col.length-1) card=col[idx];
-      }
+      if(src==='waste'&&G.waste.length) card=G.waste[G.waste.length-1];
+      else if(src==='found'&&DR.fi!==null&&G.found[DR.fi].length) card=G.found[DR.fi][G.found[DR.fi].length-1];
+      else if(src==='tab'&&ci!==null){ const col=G.tab[ci]; if(idx!==null&&idx===col.length-1) card=col[idx]; }
       DR.active=false;
       if(card) tryAutoFoundation(card,src,ci,idx);
       else renderAll();
       return;
     }
+
+    // ── Tap-tap mode ──
+    if(SEL){
+      // We have a selected card — try to drop it on whatever was tapped
+      const targetCard=DR.el;
+      const targetSrc=targetCard?targetCard.dataset.src:null;
+      let dropped=false;
+
+      if(targetSrc==='tab'||targetCard.closest('.col')){
+        const ci=targetCard.dataset.col!==undefined?+targetCard.dataset.col:
+                 (targetCard.closest('.col')?+targetCard.closest('.col').id.replace('c',''):null);
+        if(ci!==null){
+          // Temporarily override DR with selected card
+          const savedDR=DR;
+          DR=Object.assign({},SEL);
+          DR.cards=[SEL.tapCard]; // tap-tap moves single card only
+          dropped=dropTab(ci);
+          if(!dropped) DR=savedDR;
+        }
+      } else if(targetSrc==='found'||targetCard.closest('[id^="f"]')){
+        const fi=targetCard.dataset.fi!==undefined?+targetCard.dataset.fi:null;
+        if(fi!==null){
+          const savedDR=DR;
+          DR=Object.assign({},SEL);
+          DR.cards=[SEL.tapCard];
+          dropped=dropFound(fi);
+          if(!dropped) DR=savedDR;
+        }
+      }
+
+      if(dropped){
+        clearSelection(); DR.active=false; renderAll(); checkWin(); return;
+      }
+      // Tapped different card — re-select it
+      clearSelection();
+    }
+
+    // Select this card
+    DR.el.classList.add('selected');
+    SEL={cards:DR.cards, tapCard:DR.tapCard, src:DR.src,
+         col:DR.col, idx:DR.idx, fi:DR.fi, el:DR.el,
+         key:DR.key};
     DR.active=false; return;
   }
 
-  // Drag drop
+  // ── DRAG DROP with generous hit detection ──
+  clearSelection();
   TAP={key:null,time:0};
-  const underEl=document.elementFromPoint(e.clientX,e.clientY);
+  const ghostRect=ghost.getBoundingClientRect();
+  const cx=ghostRect.left+ghostRect.width/2;  // center of ghost
+  const cy=ghostRect.top+(getCardPx()*1.45)/2;
+  const target=findDropTarget(cx,cy);
   let dropped=false;
-  if(underEl){
-    for(let i=0;i<4;i++){
-      const f=document.getElementById('f'+i);
-      if(f&&f.contains(underEl)){dropped=dropFound(i);break;}
-    }
-    if(!dropped){
-      for(let c=0;c<7;c++){
-        const col=document.getElementById('c'+c);
-        if(col&&col.contains(underEl)){dropped=dropTab(c);break;}
+  if(target){
+    if(target.type==='found') dropped=dropFound(target.fi);
+    else if(target.type==='tab') dropped=dropTab(target.ci);
+  }
+  // Fallback: also try elementFromPoint
+  if(!dropped){
+    const underEl=document.elementFromPoint(e.clientX,e.clientY);
+    if(underEl){
+      for(let i=0;i<4;i++){
+        const f=document.getElementById('f'+i);
+        if(f&&f.contains(underEl)){dropped=dropFound(i);break;}
+      }
+      if(!dropped){
+        for(let c=0;c<7;c++){
+          const col=document.getElementById('c'+c);
+          if(col&&col.contains(underEl)){dropped=dropTab(c);break;}
+        }
       }
     }
   }
