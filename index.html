@@ -111,15 +111,14 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
   font-size:18px;padding:5px 10px;border-radius:2px;cursor:pointer;line-height:1;flex-shrink:0;}
 #settings-bar{display:none;}
 
-/* Mobile header — compact everything so buttons don't overflow */
+/* Mobile header compact */
 @media(max-width:480px){
-  #header{padding:8px 10px;gap:6px;}
-  #title{font-size:10px;letter-spacing:0.3em;}
-  #stats{gap:8px;}
+  #header{padding:8px 10px;gap:8px;}
+  #title{font-size:11px;letter-spacing:0.3em;}
+  #stats{gap:10px;}
   .stat-item{font-size:8px;gap:1px;}
   .stat-val{font-size:15px;}
-  #new-btn{font-size:9px;padding:5px 9px;letter-spacing:0.1em;}
-  #menu-btn{font-size:14px;padding:4px 8px;}
+  #menu-btn{font-size:14px;padding:5px 10px;}
 }
 
 /* Drawer */
@@ -138,8 +137,8 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
 #stats{display:flex;gap:14px;align-items:center;flex:1;}
 .stat-item{font-family:var(--uf);font-size:10px;letter-spacing:0.1em;color:var(--stat-c);display:flex;flex-direction:column;align-items:center;gap:2px;text-transform:uppercase;}
 .stat-val{font-size:20px;color:var(--stat-v);font-weight:700;line-height:1;}
-#new-btn{background:transparent;border:1px solid var(--btn-b);color:var(--btn-c);font-family:var(--uf);font-size:12px;letter-spacing:0.15em;padding:8px 16px;border-radius:2px;cursor:pointer;text-transform:uppercase;flex-shrink:0;}
-#new-btn:active{color:var(--accent);border-color:var(--accent);}
+
+
 
 /* ─── SETTINGS BAR ─── */
 .t-btn{flex-shrink:0;background:var(--tbtn-bg);border:1px solid var(--btn-b);color:var(--tbtn-c);font-family:var(--uf);font-size:11px;letter-spacing:0.1em;padding:6px 12px;border-radius:2px;cursor:pointer;text-transform:uppercase;white-space:nowrap;transition:all 0.15s;}
@@ -256,8 +255,9 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
 .win-card.black-c{color:#111;}
 
 /* ─── UNDO ─── */
-#undo-btn{position:fixed;bottom:20px;right:16px;z-index:100;background:var(--tbtn-bg);border:1px solid var(--btn-b);color:var(--btn-c);font-family:var(--uf);font-size:8px;letter-spacing:0.14em;padding:7px 13px;border-radius:2px;cursor:pointer;text-transform:uppercase;}
-#undo-btn:active{color:var(--accent);border-color:var(--accent);}
+#bottom-bar{position:fixed;bottom:16px;right:16px;z-index:100;display:flex;gap:6px;}
+#new-btn,#undo-btn{background:var(--tbtn-bg);border:1px solid var(--btn-b);color:var(--btn-c);font-family:var(--uf);font-size:8px;letter-spacing:0.14em;padding:7px 13px;border-radius:2px;cursor:pointer;text-transform:uppercase;}
+#new-btn:active,#undo-btn:active{color:var(--accent);border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -269,7 +269,6 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
     <div class="stat-item"><span class="stat-val" id="mv">0</span>Mov</div>
     <div class="stat-item"><span class="stat-val" id="tv">0:00</span>Time</div>
   </div>
-  <button id="new-btn">New</button>
   <button id="menu-btn" aria-label="Menu">&#9776;</button>
 </div>
 
@@ -313,7 +312,7 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
 </div></div>
 
 <div id="ghost"></div>
-<button id="undo-btn">Undo</button>
+<div id="bottom-bar"><button id="new-btn">New</button><button id="undo-btn">Undo</button></div>
 
 <div id="win-cards"></div>
 <button id="autocomplete-btn">⚡ Auto Complete</button>
