@@ -196,8 +196,8 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
 .cc{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     display:flex;flex-direction:row;align-items:center;justify-content:center;
     gap:0.05em;pointer-events:none;width:100%;}
-.cc .ccv{font-family:'Libre Baskerville',serif;font-size:9em;font-weight:700;line-height:1;opacity:0.82;}
-.cc .ccs{font-size:9em;line-height:1;opacity:0.82;}
+.cc .ccv{font-family:'Libre Baskerville',serif;font-size:8.1em;font-weight:700;line-height:1;opacity:0.82;}
+.cc .ccs{font-size:8.1em;line-height:1;opacity:0.82;}
 
 /* Face card image — actual <img> tag, fills card center */
 .face-img{
@@ -216,7 +216,7 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
 
 /* Drop highlight */
 .drop-hl{outline:2px solid var(--drop-c)!important;outline-offset:-1px;box-shadow:0 0 12px var(--drop-g),var(--card-shad)!important;}
-.card.selected{outline:3px solid var(--drop-c)!important;outline-offset:-2px;box-shadow:0 0 18px var(--drop-g),0 0 0 3px var(--drop-c)!important;transform:translateY(-4px);transition:transform 0.1s;}
+.card.selected{outline:3px solid var(--drop-c)!important;outline-offset:-2px;box-shadow:0 0 12px var(--drop-g)!important;transition:outline 0.1s;}
 
 /* ─── TABLEAU ─── */
 #tableau{display:flex;gap:var(--gap);align-items:flex-start;}
@@ -599,7 +599,10 @@ function buildGhost(cards){
 }
 
 function clearSelection(){
-  if(SEL&&SEL.el){SEL.el.classList.remove('selected');}
+  // Remove selected class from all cards that have it
+  document.querySelectorAll('.card.selected').forEach(function(el){
+    el.classList.remove('selected');
+  });
   SEL=null;
 }
 
@@ -741,6 +744,9 @@ document.addEventListener('pointerup',function(e){
 
     // ── Tap-tap mode ──
     if(SEL){
+      // Tapped the same card/stack — deselect and done
+      if(SEL.key===DR.key){ clearSelection(); DR.active=false; return; }
+
       // We have a selected card — try to drop it on whatever was tapped
       const targetCard=DR.el;
       const targetSrc=targetCard?targetCard.dataset.src:null;
@@ -750,10 +756,9 @@ document.addEventListener('pointerup',function(e){
         const ci=targetCard.dataset.col!==undefined?+targetCard.dataset.col:
                  (targetCard.closest('.col')?+targetCard.closest('.col').id.replace('c',''):null);
         if(ci!==null){
-          // Temporarily override DR with selected card
           const savedDR=DR;
           DR=Object.assign({},SEL);
-          DR.cards=[SEL.tapCard]; // tap-tap moves single card only
+          DR.cards=SEL.cards; // use full stack for tableau moves
           dropped=dropTab(ci);
           if(!dropped) DR=savedDR;
         }
@@ -762,7 +767,7 @@ document.addEventListener('pointerup',function(e){
         if(fi!==null){
           const savedDR=DR;
           DR=Object.assign({},SEL);
-          DR.cards=[SEL.tapCard];
+          DR.cards=[SEL.tapCard]; // foundation only accepts single card
           dropped=dropFound(fi);
           if(!dropped) DR=savedDR;
         }
@@ -775,8 +780,20 @@ document.addEventListener('pointerup',function(e){
       clearSelection();
     }
 
-    // Select this card
-    DR.el.classList.add('selected');
+    // Select this card — highlight the entire stack
+    // For tableau stacks, find all card DOM elements from tapped card downward
+    if(DR.src==='tab' && DR.cards.length > 1){
+      // The col container has all the card divs; find them by data-col and data-idx
+      const colEl=document.getElementById('c'+DR.col);
+      if(colEl){
+        colEl.querySelectorAll('.card.face-up').forEach(function(cardEl){
+          const cidx=+cardEl.dataset.idx;
+          if(!isNaN(cidx) && cidx>=DR.idx) cardEl.classList.add('selected');
+        });
+      }
+    } else {
+      DR.el.classList.add('selected');
+    }
     SEL={cards:DR.cards, tapCard:DR.tapCard, src:DR.src,
          col:DR.col, idx:DR.idx, fi:DR.fi, el:DR.el,
          key:DR.key};
@@ -784,10 +801,57 @@ document.addEventListener('pointerup',function(e){
   }
 
   // ── DRAG DROP with generous hit detection ──
-  clearSelection();
   TAP={key:null,time:0};
+
+  // If barely moved (micro-drag), treat as tap for selection purposes
+  const totalDist=Math.sqrt(Math.pow(e.clientX-DR.startX,2)+Math.pow(e.clientY-DR.startY,2));
+  if(totalDist < 20){
+    // Micro-drag: treat as tap — deselect if same card, reselect if different
+    if(SEL && SEL.key===DR.key){
+      clearSelection(); DR.active=false; return;
+    }
+    // Also handle: if SEL exists and tapping a valid target (tap-tap move)
+    if(SEL){
+      const targetCard=document.elementFromPoint(e.clientX,e.clientY);
+      const colEl=targetCard?targetCard.closest('.col'):null;
+      const fEl=targetCard?targetCard.closest('[id^="f"]'):null;
+      if(colEl){
+        const ci=+colEl.id.replace('c','');
+        const savedDR=DR; DR=Object.assign({},SEL); DR.cards=SEL.cards;
+        const dropped=dropTab(ci);
+        if(dropped){clearSelection();DR.active=false;renderAll();checkWin();return;}
+        DR=savedDR;
+      } else if(fEl){
+        const fi=+fEl.id.replace('f','');
+        const savedDR=DR; DR=Object.assign({},SEL); DR.cards=[SEL.tapCard];
+        const dropped=dropFound(fi);
+        if(dropped){clearSelection();DR.active=false;renderAll();checkWin();return;}
+        DR=savedDR;
+      }
+      // Tapped empty space or invalid — deselect
+      clearSelection(); DR.active=false; return;
+    }
+    // Otherwise fall through to selection logic same as wasTap
+    clearSelection();
+    if(DR.src==='tab' && DR.cards.length > 1){
+      const colEl=document.getElementById('c'+DR.col);
+      if(colEl){
+        colEl.querySelectorAll('.card.face-up').forEach(function(cardEl){
+          const cidx=+cardEl.dataset.idx;
+          if(!isNaN(cidx) && cidx>=DR.idx) cardEl.classList.add('selected');
+        });
+      }
+    } else {
+      DR.el.classList.add('selected');
+    }
+    SEL={cards:DR.cards, tapCard:DR.tapCard, src:DR.src,
+         col:DR.col, idx:DR.idx, fi:DR.fi, el:DR.el, key:DR.key};
+    DR.active=false; return;
+  }
+
+  clearSelection();
   const ghostRect=ghost.getBoundingClientRect();
-  const cx=ghostRect.left+ghostRect.width/2;  // center of ghost
+  const cx=ghostRect.left+ghostRect.width/2;
   const cy=ghostRect.top+(getCardPx()*1.45)/2;
   const target=findDropTarget(cx,cy);
   let dropped=false;
