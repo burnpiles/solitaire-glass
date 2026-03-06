@@ -111,6 +111,17 @@ body{background:var(--bg);font-family:var(--uf);min-height:100dvh;overflow-y:aut
   font-size:18px;padding:5px 10px;border-radius:2px;cursor:pointer;line-height:1;flex-shrink:0;}
 #settings-bar{display:none;}
 
+/* Mobile header — compact everything so buttons don't overflow */
+@media(max-width:480px){
+  #header{padding:8px 10px;gap:6px;}
+  #title{font-size:10px;letter-spacing:0.3em;}
+  #stats{gap:8px;}
+  .stat-item{font-size:8px;gap:1px;}
+  .stat-val{font-size:15px;}
+  #new-btn{font-size:9px;padding:5px 9px;letter-spacing:0.1em;}
+  #menu-btn{font-size:14px;padding:4px 8px;}
+}
+
 /* Drawer */
 #menu-drawer{position:fixed;top:0;right:-280px;width:260px;height:100%;
   background:var(--bg);border-left:1px solid var(--hdr-border);
